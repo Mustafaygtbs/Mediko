@@ -38,6 +38,7 @@ using (var scope = app.Services.CreateScope())
     await SeedData.InitializeRolesAndAdminUserAsync(roleManager, userManager);
     await SeedData.InitializeDepartmentsAsync(services);
     await SeedData.InitializePoliclinicsAsync(services);
+    await SeedData.InitializeDoctorsAsync(services);
 
 }
 

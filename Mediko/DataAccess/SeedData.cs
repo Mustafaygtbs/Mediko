@@ -104,6 +104,7 @@ namespace Mediko.DataAccess
 
 
         public static async Task InitializePoliclinicsAsync(IServiceProvider serviceProvider)
+
         {
             using (var context = new MedikoDbContext(serviceProvider.GetRequiredService<DbContextOptions<MedikoDbContext>>()))
             {
@@ -144,5 +145,53 @@ namespace Mediko.DataAccess
                 }
             }
         }
+
+
+        public static async Task InitializeDoctorsAsync(IServiceProvider serviceProvider)
+        {
+            using (var context = new MedikoDbContext(serviceProvider.GetRequiredService<DbContextOptions<MedikoDbContext>>()))
+            {
+                if (!context.Doctors.Any())
+                {
+                    try
+                    {
+                        var jsonPath = Path.Combine(Directory.GetCurrentDirectory(), "Data", "doctors.json");
+
+                        if (!File.Exists(jsonPath))
+                        {
+                            Console.WriteLine($"[SeedData Error] JSON dosyası bulunamadı: {jsonPath}");
+                            return;
+                        }
+
+                        var json = await File.ReadAllTextAsync(jsonPath);
+                        var doctors = JsonSerializer.Deserialize<List<Doctor>>(json);
+
+                        if (doctors != null && doctors.Any())
+                        {
+                            context.Doctors.AddRange(doctors);
+                            await context.SaveChangesAsync();
+                            Console.WriteLine("[SeedData] Doktor verileri başarıyla eklendi.");
+                        }
+                        else
+                        {
+                            Console.WriteLine("[SeedData Error] JSON dosyasında doktor verisi bulunamadı.");
+                        }
+                    }
+                    catch (Exception ex)
+                    {
+                        Console.WriteLine($"[SeedData Error] JSON yükleme hatası: {ex.Message}");
+                    }
+                }
+                else
+                {
+                    Console.WriteLine("[SeedData] Doktor verileri zaten mevcut.");
+                }
+            }
+        }
+   
+
+
+
+
     }
 }
