@@ -35,8 +35,10 @@ using (var scope = app.Services.CreateScope())
     var roleManager = services.GetRequiredService<RoleManager<IdentityRole>>();
     var userManager = services.GetRequiredService<UserManager<User>>();
 
-
     await SeedData.InitializeRolesAndAdminUserAsync(roleManager, userManager);
+    await SeedData.InitializeDepartmentsAsync(services);
+    await SeedData.InitializePoliclinicsAsync(services);
+
 }
 
 // Configure the HTTP request pipeline.

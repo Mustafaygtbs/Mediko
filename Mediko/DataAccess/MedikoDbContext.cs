@@ -14,7 +14,7 @@ namespace Mediko.DataAccess
         public DbSet<Doctor> Doctors { get; set; }
         public DbSet<Policlinic> Policlinics { get; set; }
         public DbSet<Appointment> Appointments { get; set; }
-
+        public DbSet<Department> Departments { get; set; }
 
         protected override void OnModelCreating(ModelBuilder builder)
         {

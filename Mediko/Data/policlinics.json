@@ -1,0 +1,73 @@
+[
+  { "Name": "Dahiliye Polikliniği 1", "DepartmentId": 1 },
+  { "Name": "Dahiliye Polikliniği 2", "DepartmentId": 1 },
+
+  { "Name": "Kardiyoloji Polikliniği 1", "DepartmentId": 2 },
+  { "Name": "Kardiyoloji Polikliniği 2", "DepartmentId": 2 },
+
+  { "Name": "Nöroloji Polikliniği 1", "DepartmentId": 3 },
+  { "Name": "Nöroloji Polikliniği 2", "DepartmentId": 3 },
+
+  { "Name": "Ortopedi Polikliniği 1", "DepartmentId": 4 },
+  { "Name": "Ortopedi Polikliniği 2", "DepartmentId": 4 },
+
+  { "Name": "Kadın Hastalıkları Polikliniği 1", "DepartmentId": 5 },
+  { "Name": "Kadın Hastalıkları Polikliniği 2", "DepartmentId": 5 },
+
+  { "Name": "Üroloji Polikliniği 1", "DepartmentId": 6 },
+  { "Name": "Üroloji Polikliniği 2", "DepartmentId": 6 },
+
+  { "Name": "Göz Hastalıkları Polikliniği 1", "DepartmentId": 7 },
+  { "Name": "Göz Hastalıkları Polikliniği 2", "DepartmentId": 7 },
+
+  { "Name": "KBB Polikliniği 1", "DepartmentId": 8 },
+  { "Name": "KBB Polikliniği 2", "DepartmentId": 8 },
+
+  { "Name": "Dermatoloji Polikliniği 1", "DepartmentId": 9 },
+  { "Name": "Dermatoloji Polikliniği 2", "DepartmentId": 9 },
+
+  { "Name": "Psikiyatri Polikliniği 1", "DepartmentId": 10 },
+  { "Name": "Psikiyatri Polikliniği 2", "DepartmentId": 10 },
+
+  { "Name": "Radyoloji Polikliniği 1", "DepartmentId": 11 },
+  { "Name": "Radyoloji Polikliniği 2", "DepartmentId": 11 },
+
+  { "Name": "Genel Cerrahi Polikliniği 1", "DepartmentId": 12 },
+  { "Name": "Genel Cerrahi Polikliniği 2", "DepartmentId": 12 },
+
+  { "Name": "Beyin Cerrahisi Polikliniği 1", "DepartmentId": 13 },
+  { "Name": "Beyin Cerrahisi Polikliniği 2", "DepartmentId": 13 },
+
+  { "Name": "Göğüs Hastalıkları Polikliniği 1", "DepartmentId": 14 },
+  { "Name": "Göğüs Hastalıkları Polikliniği 2", "DepartmentId": 14 },
+
+  { "Name": "Fizik Tedavi Polikliniği 1", "DepartmentId": 15 },
+  { "Name": "Fizik Tedavi Polikliniği 2", "DepartmentId": 15 },
+
+  { "Name": "Çocuk Sağlığı Polikliniği 1", "DepartmentId": 16 },
+  { "Name": "Çocuk Sağlığı Polikliniği 2", "DepartmentId": 16 },
+
+  { "Name": "Endokrinoloji Polikliniği 1", "DepartmentId": 17 },
+  { "Name": "Endokrinoloji Polikliniği 2", "DepartmentId": 17 },
+
+  { "Name": "Gastroenteroloji Polikliniği 1", "DepartmentId": 18 },
+  { "Name": "Gastroenteroloji Polikliniği 2", "DepartmentId": 18 },
+
+  { "Name": "Hematoloji Polikliniği 1", "DepartmentId": 19 },
+  { "Name": "Hematoloji Polikliniği 2", "DepartmentId": 19 },
+
+  { "Name": "Onkoloji Polikliniği 1", "DepartmentId": 20 },
+  { "Name": "Onkoloji Polikliniği 2", "DepartmentId": 20 },
+
+  { "Name": "Enfeksiyon Polikliniği 1", "DepartmentId": 21 },
+  { "Name": "Enfeksiyon Polikliniği 2", "DepartmentId": 21 },
+
+  { "Name": "Göğüs Cerrahisi Polikliniği 1", "DepartmentId": 22 },
+  { "Name": "Göğüs Cerrahisi Polikliniği 2", "DepartmentId": 22 },
+
+  { "Name": "Plastik Cerrahi Polikliniği 1", "DepartmentId": 23 },
+  { "Name": "Plastik Cerrahi Polikliniği 2", "DepartmentId": 23 },
+
+  { "Name": "Anestezi Polikliniği 1", "DepartmentId": 24 },
+  { "Name": "Anestezi Polikliniği 2", "DepartmentId": 24 }
+]

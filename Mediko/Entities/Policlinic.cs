@@ -1,4 +1,5 @@
 ﻿using System.ComponentModel.DataAnnotations;
+using System.ComponentModel.DataAnnotations.Schema;
 
 namespace Mediko.Entities
 {
@@ -9,8 +10,14 @@ namespace Mediko.Entities
 
         [Required]
         [MaxLength(100)]
-        public  string Name { get; set; }  
+        public string Name { get; set; }  
 
-        public ICollection<Doctor> Doctors { get; set; } = new List<Doctor>(); 
+        [Required]
+        public int DepartmentId { get; set; }  
+
+        [ForeignKey("DepartmentId")]
+        public Department Department { get; set; }  
+
+        public ICollection<Doctor> Doctors { get; set; } = new List<Doctor>();
     }
 }

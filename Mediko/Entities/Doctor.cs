@@ -10,11 +10,7 @@ namespace Mediko.Entities
 
         [Required]
         [MaxLength(50)]
-        public  string FirstName { get; set; } = string.Empty;  // Doktorun adı
-
-        [Required]
-        [MaxLength(50)]
-        public string LastName { get; set; } = string.Empty;  // Doktorun soyadı
+        public  string Name { get; set; } = string.Empty;  // Doktorun adı
 
         [Required]
         public int PoliclinicId { get; set; }  // Poliklinik ile ilişki
