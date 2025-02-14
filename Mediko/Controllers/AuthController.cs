@@ -1,7 +1,6 @@
 ﻿using Mediko.Entities;
-using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.AspNetCore.Authorization;
-using Microsoft.AspNetCore.Http;
+using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.Extensions.Options;
 using Microsoft.IdentityModel.Tokens;
@@ -13,79 +12,122 @@ namespace Mediko.Controllers
 {
     [Route("api/[controller]")]
     [ApiController]
-    [Authorize(Roles = "Admin,User")]
+    [Authorize]
+
     public class AuthController : ControllerBase
     {
+        private readonly UserManager<User> _userManager;
+        private readonly SignInManager<User> _signInManager;
         private readonly JwtSettings _jwtSettings;
 
-        public AuthController(IOptions<JwtSettings> jwtSettings)
-
+        public AuthController(
+            UserManager<User> userManager,
+            SignInManager<User> signInManager,
+            IOptions<JwtSettings> jwtSettings)
         {
+            _userManager = userManager;
+            _signInManager = signInManager;
             _jwtSettings = jwtSettings.Value;
         }
 
         [AllowAnonymous]
         [HttpPost("Giris")]
-        public IActionResult Login([FromBody] User user)
+        public async Task<IActionResult> Login([FromBody] LdapsızLoginDto model)
         {
-            var kullanici = GeciciKullaniciBilgileri.Users.Find(x => x.KullaniciAdi == user.KullaniciAdi && x.Sifre == user.Sifre);
-            if (kullanici == null)
-            {
-                return Unauthorized();
-            }
-            var token = JwtTokenOlustur(kullanici);
-            return Ok(token);
+            if (string.IsNullOrWhiteSpace(model.KullaniciAdi))
+                return BadRequest("Kullanıcı adı gereklidir.");
+
+            var user = await _userManager.FindByNameAsync(model.KullaniciAdi);
+            if (user == null)
+                return Unauthorized("Kullanıcı bulunamadı.");
+
+            // LDAP şifre doğrulaması olduğu için şifre kontrolüne gerek yok
+            var token = await JwtTokenOlustur(user);
+            return Ok(new { Token = token });
         }
 
-        [Authorize]
+        [AllowAnonymous]
         [HttpGet("GetUserInfo")]
-        public IActionResult GetUserInfo()
+        public async Task<IActionResult> GetUserInfo()
         {
-            var identity = HttpContext.User.Identity as ClaimsIdentity;
+            var token = HttpContext.Request.Headers["Authorization"]
+                .FirstOrDefault()?
+                .Split(" ")
+                .Last();
 
-            if (identity == null || !identity.Claims.Any())
+            if (string.IsNullOrEmpty(token))
             {
-                return Unauthorized("Kullanıcı bilgileri alınamadı.");
+                return BadRequest("Token bulunamadı.");
             }
 
-            var claims = identity.Claims;
 
-            var userInfo = new
+            var principal = MyTokenHandler.ValidateToken(token, _jwtSettings);
+            if (principal == null)
             {
-                KullaniciAdi = claims.FirstOrDefault(c => c.Type == ClaimTypes.Name)?.Value,
-                Rol = claims.FirstOrDefault(c => c.Type == ClaimTypes.Role)?.Value
-            };
+                return Unauthorized("Geçersiz token.");
+            }
 
-            return Ok(userInfo);
+            var userName = principal.Identity?.Name;
+            if (string.IsNullOrEmpty(userName))
+            {
+
+                return Unauthorized("Token'dan kullanıcı bilgisi alınamadı.");
+            }
+            var user = await _userManager.FindByNameAsync(userName);
+            if (user == null)
+            {
+
+                return NotFound("Kullanıcı bulunamadı.");
+            }
+
+
+            var roles = await _userManager.GetRolesAsync(user);
+
+
+            return Ok(new
+            {
+                userName = user.UserName,
+              //  adSoyad = user.AdSoyad,
+                email = user.Email,
+                Roles = roles
+            });
         }
 
 
-
-
-
-        private object JwtTokenOlustur(User user)
+        private async Task<string> JwtTokenOlustur(User user)
         {
             if (_jwtSettings.Key is null)
             {
-                throw new Exception("Jwt ayarındaki key değeri null olamaz");
+                throw new Exception("JWT ayarındaki Key değeri null olamaz");
             }
+
             var securityKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(_jwtSettings.Key));
             var credentials = new SigningCredentials(securityKey, SecurityAlgorithms.HmacSha256);
-            var claims = new[]
+
+            var claims = new List<Claim>
             {
-                new Claim(ClaimTypes.Name, user.KullaniciAdi!),
-                new Claim(ClaimTypes.Role,user.Rol!)
+                new Claim(ClaimTypes.NameIdentifier, user.Id),
+                new Claim(ClaimTypes.Name, user.UserName ?? ""),
+                new Claim(ClaimTypes.Email, user.Email ?? "")
             };
+
+            var roles = await _userManager.GetRolesAsync(user);
+            claims.AddRange(roles.Select(role => new Claim(ClaimTypes.Role, role)));
 
             var token = new JwtSecurityToken(
                 issuer: _jwtSettings.Issuer,
                 audience: _jwtSettings.Audience,
                 claims: claims,
-                expires: DateTime.Now.AddMinutes(30),
+                expires: DateTime.UtcNow.AddMinutes(30),
                 signingCredentials: credentials
             );
+
             return new JwtSecurityTokenHandler().WriteToken(token);
         }
+    }
 
+    public class LdapsızLoginDto
+    {
+        public string? KullaniciAdi { get; set; }
     }
 }

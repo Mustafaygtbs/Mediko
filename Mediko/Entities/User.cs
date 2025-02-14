@@ -1,10 +1,9 @@
-﻿namespace Mediko.Entities
+﻿using Microsoft.AspNetCore.Identity;
+
+namespace Mediko.Entities
 {
-    public class User
+    public class User :IdentityUser
     {
-        public int Id { get; set; }
-        public string? KullaniciAdi { get; set; }
-        public string? Sifre { get; set; }
-        public string? Rol { get; set; }
+     //   public string AdSoyad { get; set; }=string.Empty;
     }
 }
