@@ -1,9 +1,11 @@
 ﻿using Mediko.DataAccess.Interfaces;
 using Mediko.DataAccess;
-using Mediko.DataAccess.Repositories; // IUnitOfWork, GenericRepository vs.
+
 using Mediko.Entities;
 using Microsoft.AspNetCore.Mvc;
-using Microsoft.EntityFrameworkCore;
+using Mediko.Entities.DTOs;
+using AutoMapper;
+
 
 namespace Mediko.API.Controllers
 {
@@ -13,23 +15,21 @@ namespace Mediko.API.Controllers
     {
         private readonly IUnitOfWork _unitOfWork;
         private readonly MedikoDbContext _context;
+        private readonly IMapper _mapper;
 
-        public DepartmentController(IUnitOfWork unitOfWork, MedikoDbContext context)
+        public DepartmentController(IUnitOfWork unitOfWork, MedikoDbContext context, IMapper mapper)
         {
             _unitOfWork = unitOfWork;
             _context = context;
+            _mapper = mapper;
         }
 
-        // GET: api/Department/Get-All
         [HttpGet("Get-All")]
         public async Task<IActionResult> GetAll()
         {
             try
             {
-                // Temel Department verilerini çekiyoruz
                 var departments = await _unitOfWork.DepartmentRepository.GetAllAsync();
-
-                // Her Department için explicit loading ile bağlı Policlinics koleksiyonunu yüklüyoruz
                 foreach (var dept in departments)
                 {
                     await _context.Entry(dept).Collection(d => d.Policlinics).LoadAsync();
@@ -43,18 +43,15 @@ namespace Mediko.API.Controllers
             }
         }
 
-        // GET: api/Department/GetById/{id}
         [HttpGet("GetById/{id}")]
         public async Task<IActionResult> GetById(int id)
         {
             try
             {
-                // ID'ye göre department bul
                 var department = await _unitOfWork.DepartmentRepository.GetByIdAsync(id);
                 if (department == null)
                     return NotFound($"Department with Id={id} not found.");
 
-                // Explicit loading: Bağlı Policlinics koleksiyonunu yükle
                 await _context.Entry(department).Collection(d => d.Policlinics).LoadAsync();
 
                 return Ok(department);
@@ -69,19 +66,22 @@ namespace Mediko.API.Controllers
             }
         }
 
-        // POST: api/Department/Create
+
         [HttpPost("Create")]
-        public async Task<IActionResult> Create([FromBody] Department model)
+        public async Task<IActionResult> Create([FromBody] DepartmentCreateDto model)
         {
             try
             {
                 if (model == null)
                     return BadRequest("Department data is invalid.");
 
-                await _unitOfWork.DepartmentRepository.AddAsync(model);
+                var departmentEntity = _mapper.Map<Department>(model);
+
+                await _unitOfWork.DepartmentRepository.AddAsync(departmentEntity);
                 await _unitOfWork.Save();
 
-                return CreatedAtAction(nameof(GetById), new { id = model.Id }, model);
+
+                return CreatedAtAction(nameof(GetById), new { id = departmentEntity.Id }, departmentEntity);
             }
             catch (ArgumentNullException ane)
             {
@@ -93,27 +93,26 @@ namespace Mediko.API.Controllers
             }
         }
 
-        // PUT: api/Department/Update/{id}
+
         [HttpPut("Update/{id}")]
-        public async Task<IActionResult> Update(int id, [FromBody] Department model)
+        public async Task<IActionResult> Update(int id, [FromBody] DepartmentUpdateDto model)
         {
             try
             {
-                if (model == null || id != model.Id)
-                    return BadRequest("Department data is invalid or ID mismatch.");
+                if (model == null)
+                    return BadRequest("Department data is invalid.");
 
-                var existing = await _unitOfWork.DepartmentRepository.GetByIdAsync(id);
-                if (existing == null)
+                var existingDepartment = await _unitOfWork.DepartmentRepository.GetByIdAsync(id);
+                if (existingDepartment == null)
                     return NotFound($"Department with Id={id} not found.");
 
-                // Gerekli alanları güncelle (örneğin Name)
-                existing.Name = model.Name;
-                // Eğer başka alanlar varsa güncelleyebilirsin
+ 
+                _mapper.Map(model, existingDepartment);
 
-                _unitOfWork.DepartmentRepository.Update(existing);
+                _unitOfWork.DepartmentRepository.Update(existingDepartment);
                 await _unitOfWork.Save();
 
-                return NoContent();
+                return NoContent(); 
             }
             catch (KeyNotFoundException knfEx)
             {
@@ -125,7 +124,7 @@ namespace Mediko.API.Controllers
             }
         }
 
-        // DELETE: api/Department/Delete/{id}
+
         [HttpDelete("Delete/{id}")]
         public async Task<IActionResult> Delete(int id)
         {

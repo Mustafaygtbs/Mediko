@@ -1,6 +1,7 @@
 ﻿using AutoMapper;
 using Mediko.API.DTOs;
 using Mediko.Entities;
+using Mediko.Entities.DTOs;
 
 namespace Mediko.API.MappingProfiles
 {
@@ -19,6 +20,9 @@ namespace Mediko.API.MappingProfiles
             // Tersi mappingleri (varsa) de ekleyebilirsin:
             CreateMap<DepartmentDto, Department>();
             CreateMap<PoliclinicDto, Policlinic>();
+
+            CreateMap<DepartmentCreateDto, Department>();
+            CreateMap<DepartmentUpdateDto, Department>();
         }
     }
 }
