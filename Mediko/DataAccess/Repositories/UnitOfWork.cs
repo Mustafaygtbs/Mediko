@@ -1,4 +1,5 @@
-﻿using Mediko.Entities;
+﻿using Mediko.DataAccess.Interfaces;
+using Mediko.Entities;
 
 namespace Mediko.DataAccess.Repositories
 {
@@ -6,18 +7,20 @@ namespace Mediko.DataAccess.Repositories
     {
         private readonly MedikoDbContext _context;
 
+        public UnitOfWork(MedikoDbContext context, IGenericRepository<Policlinic> policlinicRepository, IGenericRepository<Appointment> appointmentRepository, IGenericRepository<Department> departmentRepository)
+        {
+            _context = context;
+            PoliclinicRepository = policlinicRepository;
+            AppointmentRepository = appointmentRepository;
+            DepartmentRepository = departmentRepository;
+        }
 
         public IGenericRepository<Policlinic> PoliclinicRepository { get; }
         public IGenericRepository<Appointment> AppointmentRepository { get; }
 
+        public IGenericRepository<Department> DepartmentRepository { get; }
 
-        public UnitOfWork(MedikoDbContext context)
-        {
-            _context = context;
 
-            PoliclinicRepository = new GenericRepository<Policlinic>(_context);
-            AppointmentRepository = new GenericRepository<Appointment>(_context);
-        }
 
         public async Task<int> Save()
         {

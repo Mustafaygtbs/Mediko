@@ -1,5 +1,7 @@
-﻿using Mediko.Business.Services;
+﻿using Mediko.API.MappingProfiles;
+using Mediko.Business.Services;
 using Mediko.DataAccess;
+using Mediko.DataAccess.Interfaces;
 using Mediko.DataAccess.Repositories;
 using Mediko.Entities;
 using Mediko.Extensions;
@@ -9,6 +11,14 @@ using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
 
 var builder = WebApplication.CreateBuilder(args);
+builder.Services.AddAutoMapper(typeof(MappingProfile)); // MappingProfile'ın bulunduğu assembly'yi belirtir.
+
+builder.Services.AddControllers().AddJsonOptions(options =>
+{
+    options.JsonSerializerOptions.ReferenceHandler = System.Text.Json.Serialization.ReferenceHandler.IgnoreCycles;
+});
+
+
 
 
 builder.Services.AddJwtAuthentication(builder.Configuration);
@@ -26,6 +36,7 @@ builder.Services.AddIdentity<User, IdentityRole>()
 builder.Services.AddScoped<ITimeslotService, TimeslotService>();
 builder.Services.AddScoped(typeof(IGenericRepository<>), typeof(GenericRepository<>));
 builder.Services.AddScoped<IUnitOfWork, UnitOfWork>();
+builder.Services.AddScoped<IAppointmentRepository, AppointmentRepository>();
 builder.Services.AddControllers();
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen();

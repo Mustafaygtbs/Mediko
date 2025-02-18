@@ -1,53 +1,73 @@
-﻿using Microsoft.EntityFrameworkCore;
-using Microsoft.EntityFrameworkCore.ChangeTracking;
+﻿using Mediko.DataAccess.Interfaces;
+using Mediko.Entities;
+using Microsoft.EntityFrameworkCore;
 using System.Linq.Expressions;
 
 namespace Mediko.DataAccess.Repositories
 {
+    
     public class GenericRepository<T> : IGenericRepository<T> where T : class
     {
         protected readonly MedikoDbContext _context;
-        private readonly DbSet<T> _dbSet;
+        protected readonly DbSet<T> _dbSet;
 
+       
         public GenericRepository(MedikoDbContext context)
         {
-            _context = context;
+            _context = context ?? throw new ArgumentNullException(nameof(context));
+            _dbSet = _context.Set<T>();
         }
 
-        public GenericRepository(MedikoDbContext context, DbSet<T> dbSet)
+        
+        public async Task AddAsync(T entity)
         {
-            _context = context;
-            _dbSet = dbSet;
+            if (entity == null)
+                throw new ArgumentNullException(nameof(entity), "Eklenecek varlık boş olamaz.");
+
+            await _dbSet.AddAsync(entity);
         }
 
-        public Task AddAsync(T entity, ChangeTracker changeTracker)
+       
+        public void Delete(T entity)
         {
-            throw new NotImplementedException();
+            if (entity == null)
+                throw new ArgumentNullException(nameof(entity), "Silinecek varlık boş olamaz.");
+            _dbSet.Remove(entity);
         }
 
-        public void Delete(T entity, ChangeTracker changeTracker)
+       
+        public async Task<IEnumerable<T>> GetAllAsync()
         {
-            throw new NotImplementedException();
+            return await _dbSet.ToListAsync();
         }
 
-        public Task<IEnumerable<T>> GetAllAsync(ChangeTracker changeTracker)
+        public async Task<IEnumerable<T>> GetAsync(Expression<Func<T, bool>> predicate)
         {
-            throw new NotImplementedException();
+            if (predicate == null)
+                throw new ArgumentNullException(nameof(predicate), "Filtreleme koşulu boş olamaz.");
+
+            return await _dbSet.Where(predicate).ToListAsync();
         }
 
-        public Task<IEnumerable<T>> GetAsync(Expression<Func<T, bool>> predicate, ChangeTracker changeTracker)
+       
+        public void Update(T entity)
         {
-            throw new NotImplementedException();
+            if (entity == null)
+                throw new ArgumentNullException(nameof(entity), "Güncellenecek varlık boş olamaz.");
+
+            _dbSet.Update(entity);
         }
 
-        public Task<T> GetByIdAsync(int id, ChangeTracker changeTracker)
+        async Task<T> IGenericRepository<T>.GetByIdAsync(int id)
         {
-            throw new NotImplementedException();
-        }
+            if (id <= 0)
+                throw new ArgumentException("ID sıfırdan büyük olmalıdır.", nameof(id));
 
-        public void Update(T entity, ChangeTracker changeTracker)
-        {
-            throw new NotImplementedException();
+            var entity = await _dbSet.FindAsync(id);
+            if (entity == null)
+                throw new KeyNotFoundException($"ID: {id} ile kayıt bulunamadı.");
+
+            return entity;
         }
     }
 }
