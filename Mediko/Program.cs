@@ -1,7 +1,10 @@
-﻿using Mediko.DataAccess;
+﻿using Mediko.Business.Services;
+using Mediko.DataAccess;
+using Mediko.DataAccess.Repositories;
 using Mediko.Entities;
 using Mediko.Extensions;
 using Mediko.Services;
+using Mediko.Services.Interfaces;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
 
@@ -20,11 +23,26 @@ builder.Services.AddIdentity<User, IdentityRole>()
     .AddEntityFrameworkStores<MedikoDbContext>()
     .AddDefaultTokenProviders();
 
+builder.Services.AddScoped<ITimeslotService, TimeslotService>();
+builder.Services.AddScoped(typeof(IGenericRepository<>), typeof(GenericRepository<>));
+builder.Services.AddScoped<IUnitOfWork, UnitOfWork>();
 builder.Services.AddControllers();
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen();
 
 var app = builder.Build();
+
+using (var scope = app.Services.CreateScope())
+{
+    var timeslotService = scope.ServiceProvider.GetRequiredService<ITimeslotService>();
+
+    // 2 günlük slot üret
+    await timeslotService.GenerateTimeslotsForNextDaysAsync(2);
+
+    // 2 günden eski timeslotları sil
+    await timeslotService.RemoveOldTimeslotsAsync(2);
+}
+
 
 using (var scope = app.Services.CreateScope())
 {
@@ -36,7 +54,6 @@ using (var scope = app.Services.CreateScope())
     await SeedData.InitializeRolesAndAdminUserAsync(roleManager, userManager);
     await SeedData.InitializeDepartmentsAsync(services);
     await SeedData.InitializePoliclinicsAsync(services);
-    await SeedData.InitializeDoctorsAsync(services);
 }
 
 

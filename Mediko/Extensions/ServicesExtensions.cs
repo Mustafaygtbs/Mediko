@@ -30,6 +30,9 @@ namespace Mediko.Extensions
             return services;
         }
 
+
+
+
         public static IServiceCollection AddLdapAuthentication(this IServiceCollection services, IConfiguration configuration)
         {
             services.AddHttpClient<ILdapAuthService, LdapAuthService>(client =>

@@ -12,8 +12,8 @@ using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 namespace Mediko.Migrations
 {
     [DbContext(typeof(MedikoDbContext))]
-    [Migration("20250214174513_mig_2")]
-    partial class mig_2
+    [Migration("20250218112835_mig_1")]
+    partial class mig_1
     {
         /// <inheritdoc />
         protected override void BuildTargetModel(ModelBuilder modelBuilder)
@@ -39,14 +39,17 @@ namespace Mediko.Migrations
                     b.Property<TimeOnly>("AppointmentTime")
                         .HasColumnType("time");
 
-                    b.Property<int>("DoctorId")
-                        .HasColumnType("int");
-
                     b.Property<DateTime>("FullAppointmentDateTime")
                         .HasColumnType("datetime2");
 
                     b.Property<bool>("IsConfirmed")
                         .HasColumnType("bit");
+
+                    b.Property<int>("PoliclinicId")
+                        .HasColumnType("int");
+
+                    b.Property<int>("PoliclinicTimeslotId")
+                        .HasColumnType("int");
 
                     b.Property<string>("UserId")
                         .IsRequired()
@@ -54,7 +57,9 @@ namespace Mediko.Migrations
 
                     b.HasKey("Id");
 
-                    b.HasIndex("DoctorId");
+                    b.HasIndex("PoliclinicId");
+
+                    b.HasIndex("PoliclinicTimeslotId");
 
                     b.HasIndex("UserId");
 
@@ -79,32 +84,6 @@ namespace Mediko.Migrations
                     b.ToTable("Departments");
                 });
 
-            modelBuilder.Entity("Mediko.Entities.Doctor", b =>
-                {
-                    b.Property<int>("Id")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("int");
-
-                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
-
-                    b.Property<bool>("IsAvailable")
-                        .HasColumnType("bit");
-
-                    b.Property<string>("Name")
-                        .IsRequired()
-                        .HasMaxLength(50)
-                        .HasColumnType("nvarchar(50)");
-
-                    b.Property<int>("PoliclinicId")
-                        .HasColumnType("int");
-
-                    b.HasKey("Id");
-
-                    b.HasIndex("PoliclinicId");
-
-                    b.ToTable("Doctors");
-                });
-
             modelBuilder.Entity("Mediko.Entities.Policlinic", b =>
                 {
                     b.Property<int>("Id")
@@ -116,6 +95,9 @@ namespace Mediko.Migrations
                     b.Property<int>("DepartmentId")
                         .HasColumnType("int");
 
+                    b.Property<bool>("IsAvailable")
+                        .HasColumnType("bit");
+
                     b.Property<string>("Name")
                         .IsRequired()
                         .HasMaxLength(100)
@@ -126,6 +108,37 @@ namespace Mediko.Migrations
                     b.HasIndex("DepartmentId");
 
                     b.ToTable("Policlinics");
+                });
+
+            modelBuilder.Entity("Mediko.Entities.PoliclinicTimeslot", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("int");
+
+                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
+
+                    b.Property<DateOnly>("Date")
+                        .HasColumnType("date");
+
+                    b.Property<bool>("IsBooked")
+                        .HasColumnType("bit");
+
+                    b.Property<bool>("IsOpen")
+                        .HasColumnType("bit");
+
+                    b.Property<int>("PoliclinicId")
+                        .HasColumnType("int");
+
+                    b.Property<TimeOnly>("StartTime")
+                        .HasColumnType("time");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("PoliclinicId", "Date", "StartTime")
+                        .IsUnique();
+
+                    b.ToTable("PoliclinicTimeslots");
                 });
 
             modelBuilder.Entity("Microsoft.AspNetCore.Identity.IdentityRole", b =>
@@ -192,11 +205,6 @@ namespace Mediko.Migrations
                         .IsConcurrencyToken()
                         .HasColumnType("nvarchar(max)");
 
-                    b.Property<string>("Discriminator")
-                        .IsRequired()
-                        .HasMaxLength(13)
-                        .HasColumnType("nvarchar(13)");
-
                     b.Property<string>("Email")
                         .HasMaxLength(256)
                         .HasColumnType("nvarchar(256)");
@@ -249,9 +257,7 @@ namespace Mediko.Migrations
 
                     b.ToTable("AspNetUsers", (string)null);
 
-                    b.HasDiscriminator<string>("Discriminator").HasValue("IdentityUser");
-
-                    b.UseTphMappingStrategy();
+                    b.UseTptMappingStrategy();
                 });
 
             modelBuilder.Entity("Microsoft.AspNetCore.Identity.IdentityUserClaim<string>", b =>
@@ -339,14 +345,60 @@ namespace Mediko.Migrations
                 {
                     b.HasBaseType("Microsoft.AspNetCore.Identity.IdentityUser");
 
-                    b.HasDiscriminator().HasValue("User");
+                    b.Property<string>("AdSoyad")
+                        .IsRequired()
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<string>("AnneAdi")
+                        .IsRequired()
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<string>("BabaAdi")
+                        .IsRequired()
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<DateTime>("DogumTarihi")
+                        .HasColumnType("datetime2");
+
+                    b.Property<string>("DogumYeri")
+                        .IsRequired()
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<string>("OgrenciNo")
+                        .IsRequired()
+                        .HasColumnType("nvarchar(450)");
+
+                    b.Property<string>("TcKimlikNo")
+                        .IsRequired()
+                        .HasMaxLength(11)
+                        .HasColumnType("nvarchar(11)");
+
+                    b.Property<string>("TelNo")
+                        .IsRequired()
+                        .HasColumnType("nvarchar(max)");
+
+                    b.HasIndex("OgrenciNo")
+                        .IsUnique()
+                        .HasFilter("[OgrenciNo] IS NOT NULL");
+
+                    b.HasIndex("TcKimlikNo")
+                        .IsUnique()
+                        .HasFilter("[TcKimlikNo] IS NOT NULL");
+
+                    b.ToTable("Users", (string)null);
                 });
 
             modelBuilder.Entity("Mediko.Entities.Appointment", b =>
                 {
-                    b.HasOne("Mediko.Entities.Doctor", "Doctor")
+                    b.HasOne("Mediko.Entities.Policlinic", "Policlinic")
                         .WithMany()
-                        .HasForeignKey("DoctorId")
+                        .HasForeignKey("PoliclinicId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+
+                    b.HasOne("Mediko.Entities.PoliclinicTimeslot", "PoliclinicTimeslot")
+                        .WithMany()
+                        .HasForeignKey("PoliclinicTimeslotId")
                         .OnDelete(DeleteBehavior.Restrict)
                         .IsRequired();
 
@@ -356,20 +408,11 @@ namespace Mediko.Migrations
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
 
-                    b.Navigation("Doctor");
+                    b.Navigation("Policlinic");
+
+                    b.Navigation("PoliclinicTimeslot");
 
                     b.Navigation("User");
-                });
-
-            modelBuilder.Entity("Mediko.Entities.Doctor", b =>
-                {
-                    b.HasOne("Mediko.Entities.Policlinic", "Policlinic")
-                        .WithMany("Doctors")
-                        .HasForeignKey("PoliclinicId")
-                        .OnDelete(DeleteBehavior.Restrict)
-                        .IsRequired();
-
-                    b.Navigation("Policlinic");
                 });
 
             modelBuilder.Entity("Mediko.Entities.Policlinic", b =>
@@ -381,6 +424,17 @@ namespace Mediko.Migrations
                         .IsRequired();
 
                     b.Navigation("Department");
+                });
+
+            modelBuilder.Entity("Mediko.Entities.PoliclinicTimeslot", b =>
+                {
+                    b.HasOne("Mediko.Entities.Policlinic", "Policlinic")
+                        .WithMany()
+                        .HasForeignKey("PoliclinicId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("Policlinic");
                 });
 
             modelBuilder.Entity("Microsoft.AspNetCore.Identity.IdentityRoleClaim<string>", b =>
@@ -434,14 +488,18 @@ namespace Mediko.Migrations
                         .IsRequired();
                 });
 
+            modelBuilder.Entity("Mediko.Entities.User", b =>
+                {
+                    b.HasOne("Microsoft.AspNetCore.Identity.IdentityUser", null)
+                        .WithOne()
+                        .HasForeignKey("Mediko.Entities.User", "Id")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+                });
+
             modelBuilder.Entity("Mediko.Entities.Department", b =>
                 {
                     b.Navigation("Policlinics");
-                });
-
-            modelBuilder.Entity("Mediko.Entities.Policlinic", b =>
-                {
-                    b.Navigation("Doctors");
                 });
 #pragma warning restore 612, 618
         }

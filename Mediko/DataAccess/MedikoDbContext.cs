@@ -1,6 +1,7 @@
 ﻿using Mediko.Entities;
 using Microsoft.AspNetCore.Identity.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore;
+using System.Reflection.Emit;
 
 namespace Mediko.DataAccess
 {
@@ -10,27 +11,45 @@ namespace Mediko.DataAccess
             : base(options)
         {
         }
-         public DbSet<User> Kullanicilar { get; set; }
-        public DbSet<Doctor> Doctors { get; set; }
+       //  public DbSet<User> Kullanicilar { get; set; }
         public DbSet<Policlinic> Policlinics { get; set; }
         public DbSet<Appointment> Appointments { get; set; }
         public DbSet<Department> Departments { get; set; }
+        public DbSet<PoliclinicTimeslot> PoliclinicTimeslots { get; set; }
 
         protected override void OnModelCreating(ModelBuilder builder)
         {
             base.OnModelCreating(builder);
-
-            builder.Entity<Doctor>()
-               .HasOne(d => d.Policlinic)
-               .WithMany(p => p.Doctors)
-               .HasForeignKey(d => d.PoliclinicId)
-               .OnDelete(DeleteBehavior.Restrict); 
-
+            //    User silindiğinde Appointment da silinir.
             builder.Entity<Appointment>()
-                .HasOne(a => a.Doctor)
-                .WithMany()
-                .HasForeignKey(a => a.DoctorId)
-                .OnDelete(DeleteBehavior.Restrict); 
+       .HasOne(a => a.User)
+       .WithMany()
+       .HasForeignKey(a => a.UserId)
+       .OnDelete(DeleteBehavior.Cascade);
+
+            //  Timeslot silinince Appointment silinmez
+            builder.Entity<Appointment>()
+       .HasOne(a => a.PoliclinicTimeslot)
+       .WithMany()
+       .HasForeignKey(a => a.PoliclinicTimeslotId)
+       .OnDelete(DeleteBehavior.Restrict);
+
+             //    Poliklinic silinince Appointment doğrudan silinmesin
+            builder.Entity<Appointment>()
+        .HasOne(a => a.Policlinic)
+        .WithMany()
+        .HasForeignKey(a => a.PoliclinicId)
+        .OnDelete(DeleteBehavior.Restrict);
+
+            //    Poliklinic silinince Timeslot da silinsin.
+
+            builder.Entity<PoliclinicTimeslot>()
+       .HasOne(ts => ts.Policlinic)
+       .WithMany()
+       .HasForeignKey(ts => ts.PoliclinicId)
+       .OnDelete(DeleteBehavior.Cascade);
+
+
 
             builder.Entity<Appointment>()
                 .HasOne(a => a.User)
@@ -38,6 +57,19 @@ namespace Mediko.DataAccess
                 .HasForeignKey(a => a.UserId)
                 .OnDelete(DeleteBehavior.Cascade);
 
+            builder.Entity<User>()
+           .HasIndex(u => u.TcKimlikNo)
+           .IsUnique();
+
+            builder.Entity<User>()
+           .HasIndex(u => u.OgrenciNo)
+           .IsUnique();
+
+            builder.Entity<PoliclinicTimeslot>()
+              .HasIndex(ts => new { ts.PoliclinicId, ts.Date, ts.StartTime })
+              .IsUnique();
+
+            builder.Entity<User>(entity => { entity.ToTable("Users"); });
         }
         protected override void OnConfiguring(DbContextOptionsBuilder optionsBuilder)
         {
@@ -52,6 +84,7 @@ namespace Mediko.DataAccess
                 var connectionString = config.GetConnectionString("DefaultConnection");
                 optionsBuilder.UseSqlServer(connectionString);
             }
+
         }
     }
 }

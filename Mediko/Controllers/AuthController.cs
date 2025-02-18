@@ -37,7 +37,7 @@ namespace Mediko.Controllers
         }
 
         [AllowAnonymous]
-        [HttpPost("Giris")]
+        [HttpPost("Ldapsız-Giris")]
         public async Task<IActionResult> Login([FromBody] LdapsızLoginDto model)
         {
             if (string.IsNullOrWhiteSpace(model.KullaniciAdi))
@@ -47,13 +47,9 @@ namespace Mediko.Controllers
             if (user == null)
                 return Unauthorized(new { Message = "Kullanıcı bulunamadı." });
 
-            // Şifre doğrulama eklendi
-            var result = await _signInManager.PasswordSignInAsync(model.KullaniciAdi, model.Sifre, false, false);
-            if (!result.Succeeded)
-                return Unauthorized(new { Message = "Geçersiz kullanıcı adı veya şifre." });
 
             var token = await JwtTokenOlustur(user);
-            return Ok(new { Token = token, KullaniciAdi = user.UserName });
+            return Ok(new { Token = token});
         }
 
         [AllowAnonymous]
@@ -69,13 +65,8 @@ namespace Mediko.Controllers
                 if (token == null)
                 {
                     return Unauthorized(new { Message = "LDAP doğrulama başarısız. Kullanıcı adı veya şifre hatalı olabilir." });
-                }
-
-                // Kullanıcı bilgilerini de döndürmek için eklendi
-                var user = await _userManager.FindByNameAsync(model.KullaniciAdi);
-                var roles = user != null ? await _userManager.GetRolesAsync(user) : new List<string>();
-
-                return Ok(new { Token = token, KullaniciAdi = model.KullaniciAdi, Roller = roles });
+                }              
+                return Ok(new { Token = token});
             }
             catch (Exception ex)
             {
@@ -140,7 +131,7 @@ namespace Mediko.Controllers
             }
         }
 
-        private async Task<string> JwtTokenOlustur(User user, bool isLdapUser = false)
+        private async Task<string> JwtTokenOlustur(User user)
         {
             if (_jwtSettings.Key is null)
             {
@@ -154,8 +145,7 @@ namespace Mediko.Controllers
             {
                 new Claim(ClaimTypes.NameIdentifier, user.Id),
                 new Claim(ClaimTypes.Name, user.UserName ?? ""),
-                new Claim(ClaimTypes.Email, user.Email ?? ""),
-                new Claim("isLdapUser", isLdapUser.ToString())
+                new Claim(ClaimTypes.Email, user.Email ?? "")
             };
 
             var roles = await _userManager.GetRolesAsync(user);
@@ -176,7 +166,7 @@ namespace Mediko.Controllers
     public class LdapsızLoginDto
     {
         public string? KullaniciAdi { get; set; }
-        public string? Sifre { get; set; }  
+
     }
 
     public class LdapLoginDto

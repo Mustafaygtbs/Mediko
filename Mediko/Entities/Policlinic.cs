@@ -16,8 +16,8 @@ namespace Mediko.Entities
         public int DepartmentId { get; set; }  
 
         [ForeignKey("DepartmentId")]
-        public Department Department { get; set; }  
+        public Department Department { get; set; }
+        public bool IsAvailable { get; set; } = true;
 
-        public ICollection<Doctor> Doctors { get; set; } = new List<Doctor>();
     }
 }
