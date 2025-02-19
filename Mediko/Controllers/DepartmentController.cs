@@ -3,8 +3,8 @@ using Mediko.DataAccess;
 
 using Mediko.Entities;
 using Microsoft.AspNetCore.Mvc;
-using Mediko.Entities.DTOs;
 using AutoMapper;
+using Mediko.Entities.DTOs.DepartmentDTOs;
 
 
 namespace Mediko.API.Controllers

@@ -1,5 +1,6 @@
-﻿
-namespace Mediko.API.DTOs
+﻿using Mediko.Entities.DTOs.PoliclinicDTOs;
+
+namespace Mediko.Entities.DTOs.DepartmentDTOs
 {
     public class DepartmentDto
     {

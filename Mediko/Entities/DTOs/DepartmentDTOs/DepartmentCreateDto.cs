@@ -1,4 +1,4 @@
-﻿namespace Mediko.Entities.DTOs
+﻿namespace Mediko.Entities.DTOs.DepartmentDTOs
 {
     public class DepartmentCreateDto
     {

@@ -20,7 +20,7 @@ namespace Mediko.DataAccess
                 await roleManager.CreateAsync(new IdentityRole("User"));
 
   
-            var adminEmail = "mediko@kocaeli.edu.tr";
+            var adminEmail = "baumreis@kocaeli.edu.tr";
             var existingAdmin = await userManager.FindByEmailAsync(adminEmail);
             var tc= "12345678901";
             var OgrenciNo = "220202017";
@@ -29,12 +29,14 @@ namespace Mediko.DataAccess
             {
                 var adminUser = new User
                 {
-                    UserName = "mediko",
+                    UserName = "baumAdmin",
                     Email = adminEmail,
+                    AdSoyad = "baum.cc",
                     TcKimlikNo = tc,
                     OgrenciNo = OgrenciNo,
-                    EmailConfirmed = true 
+                    EmailConfirmed = true
                 };
+
 
                 var result = await userManager.CreateAsync(adminUser);
                 if (result.Succeeded)
