@@ -1,11 +1,10 @@
 ﻿using Mediko.DataAccess.Interfaces;
 using Mediko.DataAccess;
-
 using Mediko.Entities;
+using Mediko.Entities.DTOs.DepartmentDTOs;
+using Mediko.Entities.Exceptions;
 using Microsoft.AspNetCore.Mvc;
 using AutoMapper;
-using Mediko.Entities.DTOs.DepartmentDTOs;
-
 
 namespace Mediko.API.Controllers
 {
@@ -49,23 +48,17 @@ namespace Mediko.API.Controllers
             try
             {
                 var department = await _unitOfWork.DepartmentRepository.GetByIdAsync(id);
-                if (department == null)
-                    return NotFound($"Department with Id={id} not found.");
-
-                await _context.Entry(department).Collection(d => d.Policlinics).LoadAsync();
-
                 return Ok(department);
             }
-            catch (KeyNotFoundException knfEx)
+            catch (NotFoundException ex)
             {
-                return NotFound(knfEx.Message);
+                return NotFound(ex.Message);
             }
             catch (Exception ex)
             {
                 return StatusCode(500, $"Sunucu hatası: {ex.Message}");
             }
         }
-
 
         [HttpPost("Create")]
         public async Task<IActionResult> Create([FromBody] DepartmentCreateDto model)
@@ -76,10 +69,8 @@ namespace Mediko.API.Controllers
                     return BadRequest("Department data is invalid.");
 
                 var departmentEntity = _mapper.Map<Department>(model);
-
                 await _unitOfWork.DepartmentRepository.AddAsync(departmentEntity);
                 await _unitOfWork.Save();
-
 
                 return CreatedAtAction(nameof(GetById), new { id = departmentEntity.Id }, departmentEntity);
             }
@@ -93,7 +84,6 @@ namespace Mediko.API.Controllers
             }
         }
 
-
         [HttpPut("Update/{id}")]
         public async Task<IActionResult> Update(int id, [FromBody] DepartmentUpdateDto model)
         {
@@ -103,20 +93,16 @@ namespace Mediko.API.Controllers
                     return BadRequest("Department data is invalid.");
 
                 var existingDepartment = await _unitOfWork.DepartmentRepository.GetByIdAsync(id);
-                if (existingDepartment == null)
-                    return NotFound($"Department with Id={id} not found.");
-
- 
                 _mapper.Map(model, existingDepartment);
 
                 _unitOfWork.DepartmentRepository.Update(existingDepartment);
                 await _unitOfWork.Save();
 
-                return NoContent(); 
+                return NoContent();
             }
-            catch (KeyNotFoundException knfEx)
+            catch (NotFoundException ex)
             {
-                return NotFound(knfEx.Message);
+                return NotFound(ex.Message);
             }
             catch (Exception ex)
             {
@@ -124,24 +110,20 @@ namespace Mediko.API.Controllers
             }
         }
 
-
         [HttpDelete("Delete/{id}")]
         public async Task<IActionResult> Delete(int id)
         {
             try
             {
-                var existing = await _unitOfWork.DepartmentRepository.GetByIdAsync(id);
-                if (existing == null)
-                    return NotFound($"Department with Id={id} not found.");
-
-                _unitOfWork.DepartmentRepository.Delete(existing);
+                var existingDepartment = await _unitOfWork.DepartmentRepository.GetByIdAsync(id);
+                _unitOfWork.DepartmentRepository.Delete(existingDepartment);
                 await _unitOfWork.Save();
 
                 return NoContent();
             }
-            catch (KeyNotFoundException knfEx)
+            catch (NotFoundException ex)
             {
-                return NotFound(knfEx.Message);
+                return NotFound(ex.Message);
             }
             catch (Exception ex)
             {

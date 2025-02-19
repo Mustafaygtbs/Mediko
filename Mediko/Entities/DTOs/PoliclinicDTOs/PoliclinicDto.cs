@@ -9,6 +9,6 @@ namespace Mediko.Entities.DTOs.PoliclinicDTOs
         public bool IsAvailable { get; set; } = true;
 
         public int DepartmentId { get; set; }
-        public DepartmentCreateDto? Department { get; set; }
+        public DepartmentSimplifiedDto? Department { get; set; }
     }
 }

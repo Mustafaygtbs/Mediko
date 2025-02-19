@@ -66,7 +66,7 @@ using (var scope = app.Services.CreateScope())
     await SeedData.InitializeDepartmentsAsync(services);
     await SeedData.InitializePoliclinicsAsync(services);
 }
-
+app.ConfigureExceptionHandler();
 
 if (app.Environment.IsDevelopment())
 {
