@@ -43,7 +43,6 @@ namespace Mediko.DataAccess
         .OnDelete(DeleteBehavior.Restrict);
 
             //    Poliklinic silinince Timeslot da silinsin.
-
             builder.Entity<PoliclinicTimeslot>()
        .HasOne(ts => ts.Policlinic)
        .WithMany()
@@ -70,7 +69,6 @@ namespace Mediko.DataAccess
               .HasIndex(ts => new { ts.PoliclinicId, ts.Date, ts.StartTime })
               .IsUnique();
 
-          //  builder.Entity<User>(entity => { entity.ToTable("Users"); });
         }
         protected override void OnConfiguring(DbContextOptionsBuilder optionsBuilder)
         {
