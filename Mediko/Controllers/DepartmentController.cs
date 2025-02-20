@@ -5,11 +5,13 @@ using Mediko.Entities.DTOs.DepartmentDTOs;
 using Mediko.Entities.Exceptions;
 using Microsoft.AspNetCore.Mvc;
 using AutoMapper;
+using Microsoft.AspNetCore.Authorization;
 
 namespace Mediko.API.Controllers
 {
     [ApiController]
     [Route("api/[controller]")]
+    //[Authorize]
     public class DepartmentController : ControllerBase
     {
         private readonly IUnitOfWork _unitOfWork;
@@ -22,7 +24,6 @@ namespace Mediko.API.Controllers
             _context = context;
             _mapper = mapper;
         }
-
         [HttpGet("Get-All")]
         public async Task<IActionResult> GetAll()
         {
@@ -48,6 +49,7 @@ namespace Mediko.API.Controllers
             try
             {
                 var department = await _unitOfWork.DepartmentRepository.GetByIdAsync(id);
+              await _context.Entry(department).Collection(d => d.Policlinics).LoadAsync();
                 return Ok(department);
             }
             catch (NotFoundException ex)

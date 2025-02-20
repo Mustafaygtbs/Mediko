@@ -17,7 +17,8 @@ namespace Mediko.Extensions
                     var contextFeature = context.Features.Get<IExceptionHandlerFeature>();
                     if (contextFeature is not null)
                     {
-                        // Exception türüne göre doğru HTTP kodunu döndürelim
+                        Console.WriteLine($" HATA OLUŞTU: {contextFeature.Error.GetType()} - {contextFeature.Error.Message}");
+
                         context.Response.StatusCode = contextFeature.Error switch
                         {
                             NotFoundException => StatusCodes.Status404NotFound,
@@ -34,9 +35,14 @@ namespace Mediko.Extensions
 
                         await context.Response.WriteAsync(errorDetails.ToString());
                     }
+                    else
+                    {
+                        Console.WriteLine(" Beklenmeyen bir hata oluştu ancak ExceptionMiddleware yakalayamadı.");
+                    }
                 });
             });
         }
+
     }
 
 }

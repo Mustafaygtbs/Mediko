@@ -33,28 +33,36 @@ namespace Mediko.Services
                 new Claim("IsLdapUser", IsLdapUser.ToString())
             };
 
-            foreach (var role in roles)
+            if (roles != null)
             {
-                claims.Add(new Claim(ClaimTypes.Role, role));
+                foreach (var role in roles)
+                {
+                    claims.Add(new Claim(ClaimTypes.Role, role));
+                }
             }
+
 
             var key = _config["Jwt:Key"];
             if (string.IsNullOrWhiteSpace(key))
-                throw new InvalidOperationException("JWT anahtar değeri belirtilmemiş.");
+            {
+                throw new InvalidOperationException("JWT anahtar değeri belirtilmemiş. Lütfen appsettings.json içinde 'Jwt:Key' tanımlayın.");
+            }
 
             var securityKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(key));
             var creds = new SigningCredentials(securityKey, SecurityAlgorithms.HmacSha256);
 
             // LDAP Kullanıcıları İçin Özel Oturum Süresi Ayarlandı
-            double expiresMinutes;
-            if (IsLdapUser && double.TryParse(_config["Jwt:LdapExpires"], out double ldapExpiresMinutes))
+            double expiresMinutes = 30; // Varsayılan 30 dakika
+            if (IsLdapUser)
             {
-                expiresMinutes = ldapExpiresMinutes;
+                _ = double.TryParse(_config["Jwt:LdapExpires"], out expiresMinutes);
             }
-            else if (!double.TryParse(_config["Jwt:Expires"], out expiresMinutes))
+            else
             {
-                expiresMinutes = 30;
+                _ = double.TryParse(_config["Jwt:Expires"], out expiresMinutes);
             }
+
+
 
             var token = new JwtSecurityToken(
                 issuer: _config["Jwt:Issuer"],

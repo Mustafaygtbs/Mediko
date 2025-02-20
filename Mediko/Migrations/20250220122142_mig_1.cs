@@ -30,6 +30,15 @@ namespace Mediko.Migrations
                 columns: table => new
                 {
                     Id = table.Column<string>(type: "nvarchar(450)", nullable: false),
+                    Discriminator = table.Column<string>(type: "nvarchar(13)", maxLength: 13, nullable: false),
+                    AdSoyad = table.Column<string>(type: "nvarchar(max)", nullable: true),
+                    OgrenciNo = table.Column<string>(type: "nvarchar(450)", nullable: true),
+                    TcKimlikNo = table.Column<string>(type: "nvarchar(11)", maxLength: 11, nullable: true),
+                    DogumTarihi = table.Column<DateTime>(type: "datetime2", nullable: true),
+                    DogumYeri = table.Column<string>(type: "nvarchar(max)", nullable: true),
+                    AnneAdi = table.Column<string>(type: "nvarchar(max)", nullable: true),
+                    BabaAdi = table.Column<string>(type: "nvarchar(max)", nullable: true),
+                    TelNo = table.Column<string>(type: "nvarchar(max)", nullable: true),
                     UserName = table.Column<string>(type: "nvarchar(256)", maxLength: 256, nullable: true),
                     NormalizedUserName = table.Column<string>(type: "nvarchar(256)", maxLength: 256, nullable: true),
                     Email = table.Column<string>(type: "nvarchar(256)", maxLength: 256, nullable: true),
@@ -170,31 +179,6 @@ namespace Mediko.Migrations
                 });
 
             migrationBuilder.CreateTable(
-                name: "Users",
-                columns: table => new
-                {
-                    Id = table.Column<string>(type: "nvarchar(450)", nullable: false),
-                    AdSoyad = table.Column<string>(type: "nvarchar(max)", nullable: false),
-                    OgrenciNo = table.Column<string>(type: "nvarchar(450)", nullable: false),
-                    TcKimlikNo = table.Column<string>(type: "nvarchar(11)", maxLength: 11, nullable: false),
-                    DogumTarihi = table.Column<DateTime>(type: "datetime2", nullable: false),
-                    DogumYeri = table.Column<string>(type: "nvarchar(max)", nullable: false),
-                    AnneAdi = table.Column<string>(type: "nvarchar(max)", nullable: false),
-                    BabaAdi = table.Column<string>(type: "nvarchar(max)", nullable: false),
-                    TelNo = table.Column<string>(type: "nvarchar(max)", nullable: false)
-                },
-                constraints: table =>
-                {
-                    table.PrimaryKey("PK_Users", x => x.Id);
-                    table.ForeignKey(
-                        name: "FK_Users_AspNetUsers_Id",
-                        column: x => x.Id,
-                        principalTable: "AspNetUsers",
-                        principalColumn: "Id",
-                        onDelete: ReferentialAction.Cascade);
-                });
-
-            migrationBuilder.CreateTable(
                 name: "Policlinics",
                 columns: table => new
                 {
@@ -256,6 +240,12 @@ namespace Mediko.Migrations
                 {
                     table.PrimaryKey("PK_Appointments", x => x.Id);
                     table.ForeignKey(
+                        name: "FK_Appointments_AspNetUsers_UserId",
+                        column: x => x.UserId,
+                        principalTable: "AspNetUsers",
+                        principalColumn: "Id",
+                        onDelete: ReferentialAction.Cascade);
+                    table.ForeignKey(
                         name: "FK_Appointments_PoliclinicTimeslots_PoliclinicTimeslotId",
                         column: x => x.PoliclinicTimeslotId,
                         principalTable: "PoliclinicTimeslots",
@@ -267,12 +257,6 @@ namespace Mediko.Migrations
                         principalTable: "Policlinics",
                         principalColumn: "Id",
                         onDelete: ReferentialAction.Restrict);
-                    table.ForeignKey(
-                        name: "FK_Appointments_Users_UserId",
-                        column: x => x.UserId,
-                        principalTable: "Users",
-                        principalColumn: "Id",
-                        onDelete: ReferentialAction.Cascade);
                 });
 
             migrationBuilder.CreateIndex(
@@ -323,6 +307,20 @@ namespace Mediko.Migrations
                 column: "NormalizedEmail");
 
             migrationBuilder.CreateIndex(
+                name: "IX_AspNetUsers_OgrenciNo",
+                table: "AspNetUsers",
+                column: "OgrenciNo",
+                unique: true,
+                filter: "[OgrenciNo] IS NOT NULL");
+
+            migrationBuilder.CreateIndex(
+                name: "IX_AspNetUsers_TcKimlikNo",
+                table: "AspNetUsers",
+                column: "TcKimlikNo",
+                unique: true,
+                filter: "[TcKimlikNo] IS NOT NULL");
+
+            migrationBuilder.CreateIndex(
                 name: "UserNameIndex",
                 table: "AspNetUsers",
                 column: "NormalizedUserName",
@@ -339,20 +337,6 @@ namespace Mediko.Migrations
                 table: "PoliclinicTimeslots",
                 columns: new[] { "PoliclinicId", "Date", "StartTime" },
                 unique: true);
-
-            migrationBuilder.CreateIndex(
-                name: "IX_Users_OgrenciNo",
-                table: "Users",
-                column: "OgrenciNo",
-                unique: true,
-                filter: "[OgrenciNo] IS NOT NULL");
-
-            migrationBuilder.CreateIndex(
-                name: "IX_Users_TcKimlikNo",
-                table: "Users",
-                column: "TcKimlikNo",
-                unique: true,
-                filter: "[TcKimlikNo] IS NOT NULL");
         }
 
         /// <inheritdoc />
@@ -380,16 +364,13 @@ namespace Mediko.Migrations
                 name: "PoliclinicTimeslots");
 
             migrationBuilder.DropTable(
-                name: "Users");
-
-            migrationBuilder.DropTable(
                 name: "AspNetRoles");
 
             migrationBuilder.DropTable(
-                name: "Policlinics");
+                name: "AspNetUsers");
 
             migrationBuilder.DropTable(
-                name: "AspNetUsers");
+                name: "Policlinics");
 
             migrationBuilder.DropTable(
                 name: "Departments");

@@ -11,7 +11,7 @@ using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
 
 var builder = WebApplication.CreateBuilder(args);
-builder.Services.AddAutoMapper(typeof(MappingProfile)); // MappingProfile'ın bulunduğu assembly'yi belirtir.
+builder.Services.AddAutoMapper(typeof(MappingProfile));
 
 builder.Services.AddControllers().AddJsonOptions(options =>
 {
@@ -39,7 +39,12 @@ builder.Services.AddScoped<IUnitOfWork, UnitOfWork>();
 builder.Services.AddScoped<IAppointmentRepository, AppointmentRepository>();
 builder.Services.AddControllers();
 builder.Services.AddEndpointsApiExplorer();
-builder.Services.AddSwaggerGen();
+//builder.Services.AddSwaggerGen();
+builder.Services.AddSwaggerDocumentation();
+
+
+
+
 
 var app = builder.Build();
 

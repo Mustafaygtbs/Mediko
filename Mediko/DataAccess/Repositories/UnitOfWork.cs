@@ -11,12 +11,12 @@ namespace Mediko.DataAccess.Repositories
         {
             _context = context;
             PoliclinicRepository = policlinicRepository;
-            AppointmentRepository = appointmentRepository;
+            AppointmentRepository = new AppointmentRepository(_context);
             DepartmentRepository = departmentRepository;
         }
 
         public IGenericRepository<Policlinic> PoliclinicRepository { get; }
-        public IGenericRepository<Appointment> AppointmentRepository { get; }
+        public IAppointmentRepository AppointmentRepository { get; private set; }
 
         public IGenericRepository<Department> DepartmentRepository { get; }
 

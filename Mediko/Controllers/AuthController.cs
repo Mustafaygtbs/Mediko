@@ -16,7 +16,7 @@ namespace Mediko.Controllers
 {
     [Route("api/[controller]")]
     [ApiController]
-    [Authorize]
+  //  [Authorize(Roles = "Admin")]
     public class AuthController : ControllerBase
     {
         private readonly UserManager<User> _userManager;
@@ -103,6 +103,8 @@ namespace Mediko.Controllers
             try
             {
                 var principal = handler.ValidateToken(token, validations, out _);
+
+                // Token içinde Name (kullanıcı adı) claim’i var mı?
                 var userName = principal.Identity?.Name;
 
                 if (string.IsNullOrEmpty(userName))
@@ -110,6 +112,8 @@ namespace Mediko.Controllers
                     return Unauthorized(new { Message = "Token'dan kullanıcı bilgisi alınamadı." });
                 }
 
+                // IdentityUser’dan tekrar okumak isterseniz (Email vs. gibi),
+                // veritabanındaki user’ı da getirebilirsiniz:
                 var user = await _userManager.FindByNameAsync(userName);
                 if (user == null)
                 {
@@ -118,11 +122,30 @@ namespace Mediko.Controllers
 
                 var roles = await _userManager.GetRolesAsync(user);
 
+
+                var adSoyad = principal.FindFirst("AdSoyad")?.Value;
+                var ogrenciNo = principal.FindFirst("OgrenciNo")?.Value;
+                var tcKimlikNo = principal.FindFirst("TcKimlikNo")?.Value;
+                var dogumTarihi = principal.FindFirst("DogumTarihi")?.Value;
+                var dogumYeri = principal.FindFirst("DogumYeri")?.Value;
+                var anneAdi = principal.FindFirst("AnneAdi")?.Value;
+                var babaAdi = principal.FindFirst("BabaAdi")?.Value;
+                var telNo = principal.FindFirst("TelNo")?.Value;
+
+                // Geriye istediğiniz biçimde dönün; örneğin hepsini tek bir json objesi olarak:
                 return Ok(new
                 {
-                    userName = user.UserName,
+                    userName = userName,
                     email = user.Email,
-                    Roles = roles
+                    roles = roles,
+                    adSoyad,
+                    ogrenciNo,
+                    tcKimlikNo,
+                    dogumTarihi,
+                    dogumYeri,
+                    anneAdi,
+                    babaAdi,
+                    telNo
                 });
             }
             catch (SecurityTokenException)
@@ -131,36 +154,85 @@ namespace Mediko.Controllers
             }
         }
 
+
         private async Task<string> JwtTokenOlustur(User user)
         {
-            if (_jwtSettings.Key is null)
-            {
-                throw new Exception("JWT ayarındaki Key değeri null olamaz");
-            }
+            if (string.IsNullOrWhiteSpace(_jwtSettings.Key))
+                throw new Exception("JWT ayarındaki Key değeri null veya boş olamaz.");
 
             var securityKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(_jwtSettings.Key));
             var credentials = new SigningCredentials(securityKey, SecurityAlgorithms.HmacSha256);
 
+            // Kullanıcıyla ilgili tüm alanları ekliyoruz
             var claims = new List<Claim>
-            {
-                new Claim(ClaimTypes.NameIdentifier, user.Id),
-                new Claim(ClaimTypes.Name, user.UserName ?? ""),
-                new Claim(ClaimTypes.Email, user.Email ?? "")
-            };
+    {
+        new Claim(ClaimTypes.NameIdentifier, user.Id),
+        new Claim(ClaimTypes.Name, user.UserName ?? ""),
+        new Claim(ClaimTypes.Email, user.Email ?? ""),
+        new Claim("AdSoyad", user.AdSoyad ?? ""),
+        new Claim("OgrenciNo", user.OgrenciNo ?? ""),
+        new Claim("TcKimlikNo", user.TcKimlikNo ?? ""),
+        new Claim("DogumTarihi", user.DogumTarihi.ToString("yyyy-MM-dd")), 
+        new Claim("DogumYeri", user.DogumYeri ?? ""),
+        new Claim("AnneAdi", user.AnneAdi ?? ""),
+        new Claim("BabaAdi", user.BabaAdi ?? ""),
+        new Claim("TelNo", user.TelNo ?? "")
+    };
 
-            var roles = await _userManager.GetRolesAsync(user);
+            var roles = await _userManager.GetRolesAsync(user) ?? new List<string>();
             claims.AddRange(roles.Select(role => new Claim(ClaimTypes.Role, role)));
+
+
+            double expiresMinutes = 30;
+            if (!string.IsNullOrWhiteSpace(_jwtSettings.Expires)
+                && double.TryParse(_jwtSettings.Expires, out double result))
+            {
+                expiresMinutes = result;
+            }
 
             var token = new JwtSecurityToken(
                 issuer: _jwtSettings.Issuer,
                 audience: _jwtSettings.Audience,
                 claims: claims,
-                expires: DateTime.UtcNow.AddMinutes(30),
+                expires: DateTime.UtcNow.AddMinutes(expiresMinutes),
                 signingCredentials: credentials
             );
 
             return new JwtSecurityTokenHandler().WriteToken(token);
         }
+
+
+
+        //private async Task<string> JwtTokenOlustur(User user)
+        //{
+        //    if (_jwtSettings.Key is null)
+        //    {
+        //        throw new Exception("JWT ayarındaki Key değeri null olamaz");
+        //    }
+
+        //    var securityKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(_jwtSettings.Key));
+        //    var credentials = new SigningCredentials(securityKey, SecurityAlgorithms.HmacSha256);
+
+        //    var claims = new List<Claim>
+        //    {
+        //        new Claim(ClaimTypes.NameIdentifier, user.Id),
+        //        new Claim(ClaimTypes.Name, user.UserName ?? ""),
+        //        new Claim(ClaimTypes.Email, user.Email ?? "")
+        //    };
+
+        //    var roles = await _userManager.GetRolesAsync(user);
+        //    claims.AddRange(roles.Select(role => new Claim(ClaimTypes.Role, role)));
+
+        //    var token = new JwtSecurityToken(
+        //        issuer: _jwtSettings.Issuer,
+        //        audience: _jwtSettings.Audience,
+        //        claims: claims,
+        //        expires: DateTime.UtcNow.AddMinutes(30),
+        //        signingCredentials: credentials
+        //    );
+
+        //    return new JwtSecurityTokenHandler().WriteToken(token);
+        //}
     }
 
     public class LdapsızLoginDto

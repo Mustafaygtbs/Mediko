@@ -17,7 +17,7 @@ namespace Mediko.Migrations
         {
 #pragma warning disable 612, 618
             modelBuilder
-                .HasAnnotation("ProductVersion", "8.0.0")
+                .HasAnnotation("ProductVersion", "9.0.2")
                 .HasAnnotation("Relational:MaxIdentifierLength", 128);
 
             SqlServerModelBuilderExtensions.UseIdentityColumns(modelBuilder);
@@ -60,7 +60,7 @@ namespace Mediko.Migrations
 
                     b.HasIndex("UserId");
 
-                    b.ToTable("Appointments");
+                    b.ToTable("Appointments", (string)null);
                 });
 
             modelBuilder.Entity("Mediko.Entities.Department", b =>
@@ -78,7 +78,7 @@ namespace Mediko.Migrations
 
                     b.HasKey("Id");
 
-                    b.ToTable("Departments");
+                    b.ToTable("Departments", (string)null);
                 });
 
             modelBuilder.Entity("Mediko.Entities.Policlinic", b =>
@@ -104,7 +104,7 @@ namespace Mediko.Migrations
 
                     b.HasIndex("DepartmentId");
 
-                    b.ToTable("Policlinics");
+                    b.ToTable("Policlinics", (string)null);
                 });
 
             modelBuilder.Entity("Mediko.Entities.PoliclinicTimeslot", b =>
@@ -135,7 +135,7 @@ namespace Mediko.Migrations
                     b.HasIndex("PoliclinicId", "Date", "StartTime")
                         .IsUnique();
 
-                    b.ToTable("PoliclinicTimeslots");
+                    b.ToTable("PoliclinicTimeslots", (string)null);
                 });
 
             modelBuilder.Entity("Microsoft.AspNetCore.Identity.IdentityRole", b =>
@@ -202,6 +202,11 @@ namespace Mediko.Migrations
                         .IsConcurrencyToken()
                         .HasColumnType("nvarchar(max)");
 
+                    b.Property<string>("Discriminator")
+                        .IsRequired()
+                        .HasMaxLength(13)
+                        .HasColumnType("nvarchar(13)");
+
                     b.Property<string>("Email")
                         .HasMaxLength(256)
                         .HasColumnType("nvarchar(256)");
@@ -254,7 +259,9 @@ namespace Mediko.Migrations
 
                     b.ToTable("AspNetUsers", (string)null);
 
-                    b.UseTptMappingStrategy();
+                    b.HasDiscriminator().HasValue("IdentityUser");
+
+                    b.UseTphMappingStrategy();
                 });
 
             modelBuilder.Entity("Microsoft.AspNetCore.Identity.IdentityUserClaim<string>", b =>
@@ -382,7 +389,7 @@ namespace Mediko.Migrations
                         .IsUnique()
                         .HasFilter("[TcKimlikNo] IS NOT NULL");
 
-                    b.ToTable("Users", (string)null);
+                    b.HasDiscriminator().HasValue("User");
                 });
 
             modelBuilder.Entity("Mediko.Entities.Appointment", b =>
@@ -481,15 +488,6 @@ namespace Mediko.Migrations
                     b.HasOne("Microsoft.AspNetCore.Identity.IdentityUser", null)
                         .WithMany()
                         .HasForeignKey("UserId")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired();
-                });
-
-            modelBuilder.Entity("Mediko.Entities.User", b =>
-                {
-                    b.HasOne("Microsoft.AspNetCore.Identity.IdentityUser", null)
-                        .WithOne()
-                        .HasForeignKey("Mediko.Entities.User", "Id")
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
                 });

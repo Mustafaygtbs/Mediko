@@ -1,5 +1,7 @@
 ﻿using AutoMapper;
 using Mediko.Entities;
+using Mediko.Entities.DTOs.AppointmentDTOs;
+using Mediko.Entities.DTOs.AppointmentDTOs.Mediko.Entities.DTOs.AppointmentDTOs;
 using Mediko.Entities.DTOs.DepartmentDTOs;
 using Mediko.Entities.DTOs.PoliclinicDTOs;
 
@@ -29,6 +31,30 @@ namespace Mediko.API.MappingProfiles
             CreateMap<PoliclinicCreateDto, Policlinic>();
             CreateMap<PoliclinicUpdateDto, Policlinic>();
             CreateMap<PoliclinicCreateWithNameDto, Policlinic>();
+
+            CreateMap<Appointment, AppointmentDto>();
+
+            CreateMap<AppointmentCreateDto, Appointment>()
+                .ForMember(dest => dest.FullAppointmentDateTime, opt =>
+                    opt.MapFrom(src => new DateTime(
+                        src.AppointmentDate.Year,
+                        src.AppointmentDate.Month,
+                        src.AppointmentDate.Day,
+                        src.AppointmentTime.Hour,
+                        src.AppointmentTime.Minute,
+                        0
+                    )));
+
+            CreateMap<AppointmentUpdateDto, Appointment>()
+               .ForMember(dest => dest.FullAppointmentDateTime, opt =>
+                   opt.MapFrom(src => new DateTime(
+                       src.AppointmentDate.Year,
+                       src.AppointmentDate.Month,
+                       src.AppointmentDate.Day,
+                       src.AppointmentTime.Hour,
+                       src.AppointmentTime.Minute,
+                       0
+                   )));
         }
     }
 }

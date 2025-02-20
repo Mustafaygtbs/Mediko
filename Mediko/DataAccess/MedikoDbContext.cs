@@ -11,7 +11,8 @@ namespace Mediko.DataAccess
             : base(options)
         {
         }
-       //  public DbSet<User> Kullanicilar { get; set; }
+        public DbSet<User> Users { get; set; }
+
         public DbSet<Policlinic> Policlinics { get; set; }
         public DbSet<Appointment> Appointments { get; set; }
         public DbSet<Department> Departments { get; set; }
@@ -69,7 +70,7 @@ namespace Mediko.DataAccess
               .HasIndex(ts => new { ts.PoliclinicId, ts.Date, ts.StartTime })
               .IsUnique();
 
-            builder.Entity<User>(entity => { entity.ToTable("Users"); });
+          //  builder.Entity<User>(entity => { entity.ToTable("Users"); });
         }
         protected override void OnConfiguring(DbContextOptionsBuilder optionsBuilder)
         {

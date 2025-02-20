@@ -6,7 +6,7 @@ namespace Mediko.DataAccess.Interfaces
     {
         IGenericRepository<Department> DepartmentRepository { get; }
         IGenericRepository<Policlinic> PoliclinicRepository { get; }
-        IGenericRepository<Appointment> AppointmentRepository { get; }
+        IAppointmentRepository AppointmentRepository { get; }
 
 
 

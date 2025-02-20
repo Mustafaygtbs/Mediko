@@ -10,10 +10,12 @@ namespace Mediko.Entities
         public string? Key { get; set; }
         public string? Issuer { get; set; }
         public string? Audience { get; set; }
+        public string? Expires { get; set; }
     }
 
     public static class MyTokenHandler
     {
+
         public static ClaimsPrincipal? ValidateToken(string token, JwtSettings jwtSettings)
         {
             if (string.IsNullOrWhiteSpace(token) || string.IsNullOrWhiteSpace(jwtSettings.Key))
