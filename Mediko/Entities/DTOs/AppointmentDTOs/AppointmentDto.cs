@@ -9,6 +9,6 @@
         public DateOnly AppointmentDate { get; set; }
         public TimeOnly AppointmentTime { get; set; }
         public DateTime FullAppointmentDateTime { get; set; }
-        public bool IsConfirmed { get; set; }
+        public AppointmentStatus Status { get; set; }
     }
 }

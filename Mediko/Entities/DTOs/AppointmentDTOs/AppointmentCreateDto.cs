@@ -9,7 +9,7 @@
             public string UserId { get; set; } = string.Empty;
             public DateOnly AppointmentDate { get; set; }
             public TimeOnly AppointmentTime { get; set; }
-            public bool IsConfirmed { get; set; } = false;
+            public AppointmentStatus Status { get; set; }
         }
     }
 

@@ -9,47 +9,56 @@ using Mediko.Services;
 using Mediko.Services.Interfaces;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.Options;
+using System.Text.Json.Serialization;
 
 var builder = WebApplication.CreateBuilder(args);
+
+// AutoMapper
 builder.Services.AddAutoMapper(typeof(MappingProfile));
 
 builder.Services.AddControllers().AddJsonOptions(options =>
 {
+    // döngüsel referansları önlemek için
     options.JsonSerializerOptions.ReferenceHandler = System.Text.Json.Serialization.ReferenceHandler.IgnoreCycles;
+
+    // enumları proje genelinde stringe dönüştürmek sertleştirmek için 
+    options.JsonSerializerOptions.Converters.Add(new System.Text.Json.Serialization.JsonStringEnumConverter());
 });
 
+
+
+// JWT ayarlarını yapılandırma
 builder.Services.ConfigureJWT(builder.Configuration);
-
-
 builder.Services.Configure<JwtSettings>(builder.Configuration.GetSection("Jwt"));
 
+// DbContext kurulumu 
 builder.Services.AddDbContext<MedikoDbContext>(options =>
     options.UseSqlServer(builder.Configuration.GetConnectionString("DefaultConnection")));
 
-//builder.Services.AddIdentity<User, IdentityRole>()
-//    .AddEntityFrameworkStores<MedikoDbContext>()
-//    .AddDefaultTokenProviders();
+// identity kurulumu IdentityCore kullanılarak minimal yapılandırma
+builder.Services.AddIdentityCore<User>(options => { })
+    .AddRoles<IdentityRole>()
+    .AddSignInManager<SignInManager<User>>()
+    .AddEntityFrameworkStores<MedikoDbContext>()
+    .AddDefaultTokenProviders();
 
+// Background service timeslotlar otomatik yenilenmesi için
 builder.Services.AddHostedService<TimeslotBackgroundService>();
 
-builder.Services.AddIdentityCore<User>(options =>
-{
-})
-.AddRoles<IdentityRole>()
-.AddSignInManager<SignInManager<User>>() 
-.AddEntityFrameworkStores<MedikoDbContext>()
-.AddDefaultTokenProviders();
-
+// repository ve UnitOfWork servisleri
 builder.Services.AddScoped<ITimeslotService, TimeslotService>();
 builder.Services.AddScoped(typeof(IGenericRepository<>), typeof(GenericRepository<>));
 builder.Services.AddScoped<IUnitOfWork, UnitOfWork>();
 builder.Services.AddScoped<IAppointmentRepository, AppointmentRepository>();
-builder.Services.AddControllers();
-builder.Services.AddEndpointsApiExplorer();
 
+
+builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerDocumentation();
 
-// mvc olsa logine yönlendirecekti mvc değil api olduğundan default olarak istek attığı yer bulunmuyor bu yüzden 404 dönüyordu.
+
+// Authorize ettiğim zaman 404 alıyordum çünkü redirect oluyordu, bu ayarla 401 döndürüyor
+// 404 dönmesiin sebebi default olarak bir login sayfasına yönlendirme yapması ancak o api bulunmadığı için 404 dönüyordu
 builder.Services.ConfigureApplicationCookie(options =>
 {
     options.Events.OnRedirectToLogin = context =>
@@ -59,34 +68,33 @@ builder.Services.ConfigureApplicationCookie(options =>
     };
 });
 
+// CORS yapılandırması
 builder.Services.AddCors(options =>
 {
     options.AddPolicy("AllowAll", policy =>
     {
         policy.AllowAnyOrigin()
               .AllowAnyMethod()
-              .AllowAnyHeader(); 
+              .AllowAnyHeader();
     });
 });
 
 var app = builder.Build();
 
+
 using (var scope = app.Services.CreateScope())
 {
     var timeslotService = scope.ServiceProvider.GetRequiredService<ITimeslotService>();
 
-    // 2 günlük slot üret
-    await timeslotService.GenerateTimeslotsForNextDaysAsync(3);
-
-    // 2 günden eski timeslotları sil
+    //  2 gün ileriye slot oluştur, 2 günden eski kullanılmamış olan  slotları temizle
+    await timeslotService.GenerateTimeslotsForNextDaysAsync(2);
     await timeslotService.RemoveOldTimeslotsAsync(2);
 }
 
-
+// seed data işlemleri
 using (var scope = app.Services.CreateScope())
 {
     var services = scope.ServiceProvider;
-
     var roleManager = services.GetRequiredService<RoleManager<IdentityRole>>();
     var userManager = services.GetRequiredService<UserManager<User>>();
 
@@ -95,21 +103,22 @@ using (var scope = app.Services.CreateScope())
     await SeedData.InitializePoliclinicsAsync(services);
 }
 
+// hata ayıklama için loglma middleware
 app.Use(async (context, next) =>
 {
     Console.WriteLine($"[{DateTime.UtcNow}] {context.Request.Method} {context.Request.Path}");
-
     if (context.Request.QueryString.HasValue)
-    {
         Console.WriteLine($"Query: {context.Request.QueryString}");
-    }
-
     await next.Invoke();
 });
 
+// global exception Handler middleware
 app.ConfigureExceptionHandler();
 
+
 app.UseCors("AllowAll");
+
+
 if (app.Environment.IsDevelopment())
 {
     app.UseSwagger();
