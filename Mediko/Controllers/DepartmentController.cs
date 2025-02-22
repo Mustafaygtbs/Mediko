@@ -6,6 +6,7 @@ using Mediko.Entities.Exceptions;
 using Microsoft.AspNetCore.Mvc;
 using AutoMapper;
 using Microsoft.AspNetCore.Authorization;
+using Mediko.Services;
 
 namespace Mediko.API.Controllers
 {
@@ -25,6 +26,20 @@ namespace Mediko.API.Controllers
             _context = context;
             _mapper = mapper;
         }
+        [HttpPost("SendTestEmail")]
+        public async Task<IActionResult> SendTestEmail([FromServices] EmailService emailService)
+        {
+            try
+            {
+                await emailService.SendEmailAsync("mustafaygtbs@gmail.com", "Test E-Posta", "<h1>Merhaba, bu bir test e-postasıdır!</h1>");
+                return Ok(new { Message = "E-posta başarıyla gönderildi." });
+            }
+            catch (Exception ex)
+            {
+                return StatusCode(500, new { Message = "E-posta gönderme hatası: " + ex.Message });
+            }
+        }
+
 
         [HttpGet("Get-All")]
         public async Task<IActionResult> GetAll()

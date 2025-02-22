@@ -185,10 +185,8 @@ namespace Mediko.API.Controllers
                 return StatusCode(500, new { Message = ex.Message });
             }
         }
-
-
         [HttpPut("UpdateConfirmation")]
-        public async Task<IActionResult> UpdateConfirmation([FromBody] AppointmentConfirmUpdateDto model)
+        public async Task<IActionResult> UpdateConfirmation([FromBody] AppointmentConfirmUpdateDto model, [FromServices] IEmailService emailService)
         {
             try
             {
@@ -216,6 +214,11 @@ namespace Mediko.API.Controllers
                 _unitOfWork.AppointmentRepository.Update(appointment);
                 await _unitOfWork.Save();
 
+                // Randevu onaylandı ya da reddedildiğinde mail gönderelim.
+                string subject = "Randevu Durumunuz Güncellendi";
+                string body = $"Merhaba {user.AdSoyad},<br/>Randevu durumunuz \"{appointment.Status}\" olarak güncellendi.";
+                await emailService.SendEmailAsync(user.Email, subject, body);
+
                 return NoContent();
             }
             catch (BadRequestException badEx)
@@ -231,6 +234,53 @@ namespace Mediko.API.Controllers
                 return StatusCode(500, new { Message = ex.Message });
             }
         }
+
+
+
+        //[HttpPut("UpdateConfirmation")]
+        //public async Task<IActionResult> UpdateConfirmation([FromBody] AppointmentConfirmUpdateDto model)
+        //{
+        //    try
+        //    {
+        //        if (model == null)
+        //            throw new BadRequestException("Randevu güncelleme verisi eksik.");
+
+        //        var user = await _context.Users.FirstOrDefaultAsync(u => u.OgrenciNo == model.OgrenciNo);
+        //        if (user == null)
+        //            throw new NotFoundException($"'{model.OgrenciNo}' numarasına sahip kullanıcı bulunamadı.");
+
+        //        var existingAppointments = await ((IAppointmentRepository)_unitOfWork.AppointmentRepository)
+        //            .GetAsync(a =>
+        //                a.UserId == user.Id &&
+        //                a.PoliclinicId == model.PoliclinicId &&
+        //                a.AppointmentDate == model.AppointmentDate &&
+        //                a.AppointmentTime == model.AppointmentTime
+        //            );
+
+        //        var appointment = existingAppointments.FirstOrDefault();
+        //        if (appointment == null)
+        //            throw new NotFoundException("Belirtilen kriterlere uyan bir randevu bulunamadı.");
+
+        //        appointment.Status = model.Status;
+
+        //        _unitOfWork.AppointmentRepository.Update(appointment);
+        //        await _unitOfWork.Save();
+
+        //        return NoContent();
+        //    }
+        //    catch (BadRequestException badEx)
+        //    {
+        //        return BadRequest(new { Message = badEx.Message });
+        //    }
+        //    catch (NotFoundException nfEx)
+        //    {
+        //        return NotFound(new { Message = nfEx.Message });
+        //    }
+        //    catch (Exception ex)
+        //    {
+        //        return StatusCode(500, new { Message = ex.Message });
+        //    }
+        //}
 
 
         [HttpDelete("Delete/{id}")]

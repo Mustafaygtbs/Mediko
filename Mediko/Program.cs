@@ -79,6 +79,17 @@ builder.Services.AddCors(options =>
     });
 });
 
+builder.Services.AddScoped<IEmailService, EmailService>();
+
+// Şu şekilde güncelle:
+builder.Services.AddScoped<EmailService>();
+builder.Services.AddScoped<IEmailService, EmailService>(provider =>
+    provider.GetRequiredService<EmailService>());
+
+// EmailSettings sınıfını DI konteynerine doğru şekilde ekleyelim:
+builder.Services.Configure<EmailSettings>(builder.Configuration.GetSection("EmailSettings"));
+builder.Services.AddSingleton(resolver =>
+    resolver.GetRequiredService<IOptions<EmailSettings>>().Value);
 var app = builder.Build();
 
 
