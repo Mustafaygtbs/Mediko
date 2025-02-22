@@ -20,8 +20,7 @@ namespace Mediko.Services
             _emailSettings = emailSettings.Value;
             _config = config;
         }
-
-        public async Task SendEmailAsync(string toEmail, string subject, string body)
+        public async Task SendEmailAsync(string toEmail, string subject, string htmlBody)
         {
             var smtpServer = _config["EmailSettings:SmtpServer"];
             var port = int.Parse(_config["EmailSettings:Port"]);
@@ -32,15 +31,15 @@ namespace Mediko.Services
             using (var client = new SmtpClient(smtpServer, port))
             {
                 client.Credentials = new NetworkCredential(userName, password);
-                client.EnableSsl = true; 
+                client.EnableSsl = true;
                 client.DeliveryMethod = SmtpDeliveryMethod.Network;
                 client.UseDefaultCredentials = false;
 
                 var mailMessage = new MailMessage
                 {
-                    From = new MailAddress(senderEmail, "Mediko Uygulaması"),
+                    From = new MailAddress(senderEmail, "Mediko Sağlık Merkezi"),
                     Subject = subject,
-                    Body = body,
+                    Body = htmlBody, 
                     IsBodyHtml = true
                 };
                 mailMessage.To.Add(toEmail);
@@ -48,6 +47,8 @@ namespace Mediko.Services
                 await client.SendMailAsync(mailMessage);
             }
         }
+       
+       
 
     }
 }

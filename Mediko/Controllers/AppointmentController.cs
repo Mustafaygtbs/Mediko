@@ -185,6 +185,7 @@ namespace Mediko.API.Controllers
                 return StatusCode(500, new { Message = ex.Message });
             }
         }
+
         [HttpPut("UpdateConfirmation")]
         public async Task<IActionResult> UpdateConfirmation([FromBody] AppointmentConfirmUpdateDto model, [FromServices] IEmailService emailService)
         {
@@ -214,10 +215,8 @@ namespace Mediko.API.Controllers
                 _unitOfWork.AppointmentRepository.Update(appointment);
                 await _unitOfWork.Save();
 
-                // Randevu onaylandı ya da reddedildiğinde mail gönderelim.
-                string subject = "Randevu Durumunuz Güncellendi";
-                string body = $"Merhaba {user.AdSoyad},<br/>Randevu durumunuz \"{appointment.Status}\" olarak güncellendi.";
-                await emailService.SendEmailAsync(user.Email, subject, body);
+                // 📧 **Mail Gönderme Metodunu Çağır**
+                await SendAppointmentConfirmationEmail(emailService, user, appointment);
 
                 return NoContent();
             }
@@ -235,53 +234,45 @@ namespace Mediko.API.Controllers
             }
         }
 
+        private async Task SendAppointmentConfirmationEmail(IEmailService emailService, User user, Appointment appointment)
+        {
+            try
+            {
+                
+                appointment = await _context.Appointments
+                    .Include(a => a.Policlinic)  
+                    .FirstOrDefaultAsync(a => a.Id == appointment.Id);
+
+                if (appointment == null)
+                    throw new NotFoundException("Randevu bulunamadı.");
+
+                if (appointment.Policlinic == null)
+                    throw new NotFoundException("Poliklinik bilgisi bulunamadı.");
+
+                
+                string subject = "📅 Randevu Durumunuz Güncellendi";
+
+                
+                string emailTemplatePath = "Templates/AppointmentStatusTemplate.html";
+                string emailTemplate = await System.IO.File.ReadAllTextAsync(emailTemplatePath);
+
+                
+                emailTemplate = emailTemplate.Replace("{USERNAME}", user.AdSoyad)
+                                             .Replace("{STATUS}", appointment.Status.ToString())
+                                             .Replace("{DATE}", appointment.AppointmentDate.ToString("yyyy-MM-dd"))
+                                             .Replace("{TIME}", appointment.AppointmentTime.ToString("HH:mm"))
+                                             .Replace("{POLICLINIC_NAME}", appointment.Policlinic.Name);
+
+                await emailService.SendEmailAsync(user.Email, subject, emailTemplate);
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine($"📧 Mail Gönderme Hatası: {ex.Message}");
+            }
+        }
 
 
-        //[HttpPut("UpdateConfirmation")]
-        //public async Task<IActionResult> UpdateConfirmation([FromBody] AppointmentConfirmUpdateDto model)
-        //{
-        //    try
-        //    {
-        //        if (model == null)
-        //            throw new BadRequestException("Randevu güncelleme verisi eksik.");
-
-        //        var user = await _context.Users.FirstOrDefaultAsync(u => u.OgrenciNo == model.OgrenciNo);
-        //        if (user == null)
-        //            throw new NotFoundException($"'{model.OgrenciNo}' numarasına sahip kullanıcı bulunamadı.");
-
-        //        var existingAppointments = await ((IAppointmentRepository)_unitOfWork.AppointmentRepository)
-        //            .GetAsync(a =>
-        //                a.UserId == user.Id &&
-        //                a.PoliclinicId == model.PoliclinicId &&
-        //                a.AppointmentDate == model.AppointmentDate &&
-        //                a.AppointmentTime == model.AppointmentTime
-        //            );
-
-        //        var appointment = existingAppointments.FirstOrDefault();
-        //        if (appointment == null)
-        //            throw new NotFoundException("Belirtilen kriterlere uyan bir randevu bulunamadı.");
-
-        //        appointment.Status = model.Status;
-
-        //        _unitOfWork.AppointmentRepository.Update(appointment);
-        //        await _unitOfWork.Save();
-
-        //        return NoContent();
-        //    }
-        //    catch (BadRequestException badEx)
-        //    {
-        //        return BadRequest(new { Message = badEx.Message });
-        //    }
-        //    catch (NotFoundException nfEx)
-        //    {
-        //        return NotFound(new { Message = nfEx.Message });
-        //    }
-        //    catch (Exception ex)
-        //    {
-        //        return StatusCode(500, new { Message = ex.Message });
-        //    }
-        //}
-
+      
 
         [HttpDelete("Delete/{id}")]
         public async Task<IActionResult> Delete(int id)
