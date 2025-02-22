@@ -26,8 +26,9 @@ namespace Mediko.DataAccess.Repositories
         public async Task<IEnumerable<Appointment>> GetConfirmedAppointmentsAsync()
         {
             return await _dbSet
-                .Where(a => a.IsConfirmed)
-                .ToListAsync();
+                 .Where(a => a.Status == AppointmentStatus.Onaylandı)
+                 .ToListAsync();
         }
+
     }
 }

@@ -160,7 +160,7 @@ namespace Mediko.API.Controllers
                         model.AppointmentDate.Year, model.AppointmentDate.Month, model.AppointmentDate.Day,
                         model.AppointmentTime.Hour, model.AppointmentTime.Minute, 0
                     ),
-                    IsConfirmed = false 
+                    Status = AppointmentStatus.OnayBekliyor
                 };
 
                 await _unitOfWork.AppointmentRepository.AddAsync(appointment);
@@ -186,20 +186,20 @@ namespace Mediko.API.Controllers
             }
         }
 
-        [HttpPut("OnayDurumuGuncelle")]
+
+        [HttpPut("UpdateConfirmation")]
         public async Task<IActionResult> UpdateConfirmation([FromBody] AppointmentConfirmUpdateDto model)
         {
             try
             {
                 if (model == null)
-                    throw new BadRequestException("Randevu güncelleme bilgileri eksik.");
+                    throw new BadRequestException("Randevu güncelleme verisi eksik.");
 
-                var user = await _context.Users
-                    .FirstOrDefaultAsync(u => u.OgrenciNo == model.OgrenciNo);
+                var user = await _context.Users.FirstOrDefaultAsync(u => u.OgrenciNo == model.OgrenciNo);
                 if (user == null)
                     throw new NotFoundException($"'{model.OgrenciNo}' numarasına sahip kullanıcı bulunamadı.");
 
-                var existingAppointment = await ((IAppointmentRepository)_unitOfWork.AppointmentRepository)
+                var existingAppointments = await ((IAppointmentRepository)_unitOfWork.AppointmentRepository)
                     .GetAsync(a =>
                         a.UserId == user.Id &&
                         a.PoliclinicId == model.PoliclinicId &&
@@ -207,18 +207,16 @@ namespace Mediko.API.Controllers
                         a.AppointmentTime == model.AppointmentTime
                     );
 
-                var appointment = existingAppointment.FirstOrDefault();
+                var appointment = existingAppointments.FirstOrDefault();
                 if (appointment == null)
                     throw new NotFoundException("Belirtilen kriterlere uyan bir randevu bulunamadı.");
 
-                appointment.IsConfirmed = model.IsConfirmed;
-
+                appointment.Status = model.Status;
 
                 _unitOfWork.AppointmentRepository.Update(appointment);
                 await _unitOfWork.Save();
 
-
-                return NoContent(); 
+                return NoContent();
             }
             catch (BadRequestException badEx)
             {
@@ -233,7 +231,8 @@ namespace Mediko.API.Controllers
                 return StatusCode(500, new { Message = ex.Message });
             }
         }
-    
+
+
         [HttpDelete("Delete/{id}")]
         public async Task<IActionResult> Delete(int id)
         {

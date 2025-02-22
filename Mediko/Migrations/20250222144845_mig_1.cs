@@ -30,15 +30,14 @@ namespace Mediko.Migrations
                 columns: table => new
                 {
                     Id = table.Column<string>(type: "nvarchar(450)", nullable: false),
-                    Discriminator = table.Column<string>(type: "nvarchar(13)", maxLength: 13, nullable: false),
-                    AdSoyad = table.Column<string>(type: "nvarchar(max)", nullable: true),
-                    OgrenciNo = table.Column<string>(type: "nvarchar(450)", nullable: true),
-                    TcKimlikNo = table.Column<string>(type: "nvarchar(11)", maxLength: 11, nullable: true),
-                    DogumTarihi = table.Column<DateTime>(type: "datetime2", nullable: true),
-                    DogumYeri = table.Column<string>(type: "nvarchar(max)", nullable: true),
-                    AnneAdi = table.Column<string>(type: "nvarchar(max)", nullable: true),
-                    BabaAdi = table.Column<string>(type: "nvarchar(max)", nullable: true),
-                    TelNo = table.Column<string>(type: "nvarchar(max)", nullable: true),
+                    AdSoyad = table.Column<string>(type: "nvarchar(max)", nullable: false),
+                    OgrenciNo = table.Column<string>(type: "nvarchar(450)", nullable: false),
+                    TcKimlikNo = table.Column<string>(type: "nvarchar(11)", maxLength: 11, nullable: false),
+                    DogumTarihi = table.Column<DateTime>(type: "datetime2", nullable: false),
+                    DogumYeri = table.Column<string>(type: "nvarchar(max)", nullable: false),
+                    AnneAdi = table.Column<string>(type: "nvarchar(max)", nullable: false),
+                    BabaAdi = table.Column<string>(type: "nvarchar(max)", nullable: false),
+                    TelNo = table.Column<string>(type: "nvarchar(max)", nullable: false),
                     UserName = table.Column<string>(type: "nvarchar(256)", maxLength: 256, nullable: true),
                     NormalizedUserName = table.Column<string>(type: "nvarchar(256)", maxLength: 256, nullable: true),
                     Email = table.Column<string>(type: "nvarchar(256)", maxLength: 256, nullable: true),
@@ -179,6 +178,27 @@ namespace Mediko.Migrations
                 });
 
             migrationBuilder.CreateTable(
+                name: "RefreshTokens",
+                columns: table => new
+                {
+                    Id = table.Column<int>(type: "int", nullable: false)
+                        .Annotation("SqlServer:Identity", "1, 1"),
+                    Token = table.Column<string>(type: "nvarchar(max)", nullable: false),
+                    UserId = table.Column<string>(type: "nvarchar(450)", nullable: false),
+                    ExpirationDate = table.Column<DateTime>(type: "datetime2", nullable: false)
+                },
+                constraints: table =>
+                {
+                    table.PrimaryKey("PK_RefreshTokens", x => x.Id);
+                    table.ForeignKey(
+                        name: "FK_RefreshTokens_AspNetUsers_UserId",
+                        column: x => x.UserId,
+                        principalTable: "AspNetUsers",
+                        principalColumn: "Id",
+                        onDelete: ReferentialAction.Cascade);
+                });
+
+            migrationBuilder.CreateTable(
                 name: "Policlinics",
                 columns: table => new
                 {
@@ -234,7 +254,7 @@ namespace Mediko.Migrations
                     AppointmentDate = table.Column<DateOnly>(type: "date", nullable: false),
                     AppointmentTime = table.Column<TimeOnly>(type: "time", nullable: false),
                     FullAppointmentDateTime = table.Column<DateTime>(type: "datetime2", nullable: false),
-                    IsConfirmed = table.Column<bool>(type: "bit", nullable: false)
+                    Status = table.Column<string>(type: "nvarchar(max)", nullable: false)
                 },
                 constraints: table =>
                 {
@@ -310,15 +330,13 @@ namespace Mediko.Migrations
                 name: "IX_AspNetUsers_OgrenciNo",
                 table: "AspNetUsers",
                 column: "OgrenciNo",
-                unique: true,
-                filter: "[OgrenciNo] IS NOT NULL");
+                unique: true);
 
             migrationBuilder.CreateIndex(
                 name: "IX_AspNetUsers_TcKimlikNo",
                 table: "AspNetUsers",
                 column: "TcKimlikNo",
-                unique: true,
-                filter: "[TcKimlikNo] IS NOT NULL");
+                unique: true);
 
             migrationBuilder.CreateIndex(
                 name: "UserNameIndex",
@@ -337,6 +355,11 @@ namespace Mediko.Migrations
                 table: "PoliclinicTimeslots",
                 columns: new[] { "PoliclinicId", "Date", "StartTime" },
                 unique: true);
+
+            migrationBuilder.CreateIndex(
+                name: "IX_RefreshTokens_UserId",
+                table: "RefreshTokens",
+                column: "UserId");
         }
 
         /// <inheritdoc />
@@ -359,6 +382,9 @@ namespace Mediko.Migrations
 
             migrationBuilder.DropTable(
                 name: "AspNetUserTokens");
+
+            migrationBuilder.DropTable(
+                name: "RefreshTokens");
 
             migrationBuilder.DropTable(
                 name: "PoliclinicTimeslots");

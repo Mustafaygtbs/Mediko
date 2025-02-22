@@ -46,7 +46,7 @@ builder.Services.AddScoped<IUnitOfWork, UnitOfWork>();
 builder.Services.AddScoped<IAppointmentRepository, AppointmentRepository>();
 builder.Services.AddControllers();
 builder.Services.AddEndpointsApiExplorer();
-//builder.Services.AddSwaggerGen();
+
 builder.Services.AddSwaggerDocumentation();
 
 // mvc olsa logine yönlendirecekti mvc değil api olduğundan default olarak istek attığı yer bulunmuyor bu yüzden 404 dönüyordu.

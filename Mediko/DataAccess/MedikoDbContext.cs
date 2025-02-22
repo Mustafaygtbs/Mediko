@@ -71,6 +71,12 @@ namespace Mediko.DataAccess
               .HasIndex(ts => new { ts.PoliclinicId, ts.Date, ts.StartTime })
               .IsUnique();
 
+            builder.Entity<Appointment>()
+        .Property(a => a.Status)
+        .HasConversion(
+            v => v.ToString(),
+            v => (AppointmentStatus)Enum.Parse(typeof(AppointmentStatus), v));
+
         }
         protected override void OnConfiguring(DbContextOptionsBuilder optionsBuilder)
         {

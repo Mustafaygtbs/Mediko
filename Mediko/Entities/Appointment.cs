@@ -35,8 +35,7 @@ namespace Mediko.Entities
         [Required]
         public DateTime FullAppointmentDateTime { get; set; }
 
-         public bool IsConfirmed { get; set; } = false;
-       // public string IsCOnfirmed { get; set; }
+        public AppointmentStatus Status { get; set; } = AppointmentStatus.OnayBekliyor;
 
         public Appointment()
         {

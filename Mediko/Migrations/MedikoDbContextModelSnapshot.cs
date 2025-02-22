@@ -39,14 +39,15 @@ namespace Mediko.Migrations
                     b.Property<DateTime>("FullAppointmentDateTime")
                         .HasColumnType("datetime2");
 
-                    b.Property<bool>("IsConfirmed")
-                        .HasColumnType("bit");
-
                     b.Property<int>("PoliclinicId")
                         .HasColumnType("int");
 
                     b.Property<int>("PoliclinicTimeslotId")
                         .HasColumnType("int");
+
+                    b.Property<string>("Status")
+                        .IsRequired()
+                        .HasColumnType("nvarchar(max)");
 
                     b.Property<string>("UserId")
                         .IsRequired()
