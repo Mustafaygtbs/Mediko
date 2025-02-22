@@ -1,5 +1,6 @@
 ﻿using System.ComponentModel.DataAnnotations;
 using System.ComponentModel.DataAnnotations.Schema;
+using System.Security.Cryptography.X509Certificates;
 
 namespace Mediko.Entities
 {
@@ -34,7 +35,8 @@ namespace Mediko.Entities
         [Required]
         public DateTime FullAppointmentDateTime { get; set; }
 
-        public bool IsConfirmed { get; set; } = false;
+         public bool IsConfirmed { get; set; } = false;
+       // public string IsCOnfirmed { get; set; }
 
         public Appointment()
         {

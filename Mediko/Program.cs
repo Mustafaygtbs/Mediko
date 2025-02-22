@@ -30,6 +30,8 @@ builder.Services.AddDbContext<MedikoDbContext>(options =>
 //    .AddEntityFrameworkStores<MedikoDbContext>()
 //    .AddDefaultTokenProviders();
 
+builder.Services.AddHostedService<TimeslotBackgroundService>();
+
 builder.Services.AddIdentityCore<User>(options =>
 {
 })
