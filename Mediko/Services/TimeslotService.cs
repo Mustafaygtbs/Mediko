@@ -16,7 +16,6 @@ namespace Mediko.Business.Services
 
         public async Task GenerateTimeslotsForNextDaysAsync(int days)
         {
-            // 1) Tüm poliklinikleri çek
             var policlinics = await _context.Policlinics.ToListAsync();
 
             for (int dayOffset = 0; dayOffset < days; dayOffset++)
@@ -56,13 +55,16 @@ namespace Mediko.Business.Services
 
             await _context.SaveChangesAsync();
         }
-
         public async Task RemoveOldTimeslotsAsync(int daysThreshold)
         {
             var cutoffDate = DateOnly.FromDateTime(DateTime.Today.AddDays(-daysThreshold));
 
             var oldSlots = _context.PoliclinicTimeslots
-                .Where(ts => ts.Date < cutoffDate && ts.IsBooked == false);
+                .Where(ts =>
+                    ts.Date < cutoffDate
+                    && ts.IsBooked == false
+                    && !_context.Appointments.Any(a => a.PoliclinicTimeslotId == ts.Id)
+                );
 
             _context.PoliclinicTimeslots.RemoveRange(oldSlots);
             await _context.SaveChangesAsync();

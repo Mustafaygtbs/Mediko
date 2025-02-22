@@ -6,11 +6,14 @@ using Mediko.Entities.Exceptions;
 using Microsoft.AspNetCore.Mvc;
 using AutoMapper;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.AspNetCore.Authorization;
+using System.Security.Claims;
 
 namespace Mediko.API.Controllers
 {
     [ApiController]
     [Route("api/[controller]")]
+    [Authorize(Roles ="Admin")]
     public class PoliclinicController : ControllerBase
     {
         private readonly IUnitOfWork _unitOfWork;
@@ -24,9 +27,10 @@ namespace Mediko.API.Controllers
             _mapper = mapper;
         }
 
-        [HttpGet("Get-All")]
+        [HttpGet]
         public async Task<IActionResult> GetAll()
         {
+            
             try
             {
                 var policlinics = await _unitOfWork.PoliclinicRepository.GetAllAsync();

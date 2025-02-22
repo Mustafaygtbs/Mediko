@@ -13,6 +13,7 @@ namespace Mediko.API.Controllers
 {
     [ApiController]
     [Route("api/[controller]")]
+    [Authorize(Roles = "Admin,User")]
     public class AppointmentController : ControllerBase
     {
         private readonly IUnitOfWork _unitOfWork;

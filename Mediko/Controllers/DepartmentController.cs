@@ -11,7 +11,8 @@ namespace Mediko.API.Controllers
 {
     [ApiController]
     [Route("api/[controller]")]
-    //[Authorize]
+   [Authorize(Roles ="Admin")]
+
     public class DepartmentController : ControllerBase
     {
         private readonly IUnitOfWork _unitOfWork;
@@ -24,9 +25,13 @@ namespace Mediko.API.Controllers
             _context = context;
             _mapper = mapper;
         }
+
         [HttpGet("Get-All")]
         public async Task<IActionResult> GetAll()
         {
+
+
+
             try
             {
                 var departments = await _unitOfWork.DepartmentRepository.GetAllAsync();

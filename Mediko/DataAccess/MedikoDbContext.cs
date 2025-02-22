@@ -1,11 +1,12 @@
 ﻿using Mediko.Entities;
+
 using Microsoft.AspNetCore.Identity.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore;
 using System.Reflection.Emit;
 
 namespace Mediko.DataAccess
 {
-    public class MedikoDbContext : IdentityDbContext
+    public class MedikoDbContext : IdentityDbContext<User>
     {
         public MedikoDbContext(DbContextOptions<MedikoDbContext> options)
             : base(options)
@@ -17,6 +18,7 @@ namespace Mediko.DataAccess
         public DbSet<Appointment> Appointments { get; set; }
         public DbSet<Department> Departments { get; set; }
         public DbSet<PoliclinicTimeslot> PoliclinicTimeslots { get; set; }
+        public DbSet<RefreshToken> RefreshTokens { get; set; }
 
         protected override void OnModelCreating(ModelBuilder builder)
         {

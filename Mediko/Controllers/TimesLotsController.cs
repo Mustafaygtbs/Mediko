@@ -3,6 +3,7 @@ using Mediko.Entities;
 
 using Mediko.Entities.DTOs.TimesLotsDTOs;
 using Mediko.Entities.Exceptions;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 
@@ -10,6 +11,7 @@ namespace Mediko.API.Controllers
 {
     [ApiController]
     [Route("api/[controller]")]
+    [Authorize(Roles="Admin")]
     public class TimeslotsController : ControllerBase
     {
         private readonly MedikoDbContext _context;

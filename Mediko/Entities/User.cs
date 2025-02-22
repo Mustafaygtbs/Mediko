@@ -20,5 +20,7 @@ namespace Mediko.Entities
         public string BabaAdi { get; set; } = string.Empty;
 
         public string TelNo { get; set; } = string.Empty;
+
+
     }
 }

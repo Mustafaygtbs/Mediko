@@ -1,56 +1,89 @@
-using Mediko.Services;
+using Mediko.Entities;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
-using Microsoft.Extensions.Configuration;
-using Microsoft.Extensions.DependencyInjection;
 using Microsoft.IdentityModel.Tokens;
 using Microsoft.OpenApi.Models;
-using System.Net.Http;
 using System.Text;
 
 namespace Mediko.Extensions
 {
     public static class ServicesExtensions
     {
-        public static IServiceCollection AddJwtAuthentication(this IServiceCollection services, IConfiguration configuration)
+        public static void ConfigureJWT(this IServiceCollection services,
+         IConfiguration configuration)
         {
-            services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
-                .AddJwtBearer(options =>
+            var jwtSettings = configuration.GetSection("Jwt");
+            var secretKey = jwtSettings["Key"];
+
+            services.AddAuthentication(opt =>
+            {
+                opt.DefaultAuthenticateScheme = JwtBearerDefaults.AuthenticationScheme;
+                opt.DefaultChallengeScheme = JwtBearerDefaults.AuthenticationScheme;
+            }).AddJwtBearer(options =>
+                options.TokenValidationParameters = new TokenValidationParameters
                 {
-                    options.TokenValidationParameters = new TokenValidationParameters
-                    {
-                        ValidateIssuer = true,
-                        ValidateAudience = true,
-                        ValidateLifetime = true,
-                        ValidateIssuerSigningKey = true,
-                        ValidIssuer = configuration["Jwt:Issuer"],
-                        ValidAudience = configuration["Jwt:Audience"],
-                        IssuerSigningKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(
-                            configuration["Jwt:Key"] ?? throw new ArgumentNullException("Jwt:Key", "JWT anahtar değeri belirtilmemiş."))),
-                        ClockSkew = TimeSpan.Zero 
-                    };
-
-                    options.Events = new JwtBearerEvents
-                    {
-                        OnAuthenticationFailed = context =>
-                        {
-                            Console.WriteLine($"[JWT Error] {context.Exception.Message}");
-                            return Task.CompletedTask;
-                        },
-                        OnChallenge = context =>
-                        {
-                            Console.WriteLine($"[JWT Challenge] {context.Error}, {context.ErrorDescription}");
-                            return Task.CompletedTask;
-                        },
-                        OnForbidden = context =>
-                        {
-                            Console.WriteLine("[JWT Forbidden] Yetkilendirme başarısız.");
-                            return Task.CompletedTask;
-                        }
-                    };
-                });
-
-            return services;
+                    ValidateIssuer = true,
+                    ValidateAudience = true,
+                    ValidateLifetime = true,
+                    ValidateIssuerSigningKey = true,
+                    ValidIssuer = jwtSettings["Issuer"],
+                    ValidAudience = jwtSettings["Audience"],
+                    IssuerSigningKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(secretKey))
+                }
+            );
         }
+
+        //public static IServiceCollection AddJwtAuthentication(this IServiceCollection services, IConfiguration configuration)
+        //{
+        //    var jwtKey = configuration["Jwt:Key"]
+        //        ?? throw new InvalidOperationException("JWT Key is missing in configuration.");
+
+        //    services.Configure<JwtSettings>(configuration.GetSection("Jwt"));
+
+        //    services.AddAuthentication(options =>
+        //    {
+        //        options.DefaultAuthenticateScheme = JwtBearerDefaults.AuthenticationScheme;
+        //        options.DefaultChallengeScheme = JwtBearerDefaults.AuthenticationScheme;
+        //    })
+        //    .AddJwtBearer(options =>
+        //    {
+        //        options.TokenValidationParameters = new TokenValidationParameters
+        //        {
+        //            ValidateIssuer = true,
+        //            ValidateAudience = true,
+        //            ValidateLifetime = true,
+        //            ValidateIssuerSigningKey = true,
+        //            ValidIssuer = configuration["Jwt:Issuer"],
+        //            ValidAudience = configuration["Jwt:Audience"],
+        //            IssuerSigningKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(jwtKey)),
+        //            ClockSkew = TimeSpan.Zero
+        //        };
+
+        //        options.Events = new JwtBearerEvents
+        //        {
+        //            OnAuthenticationFailed = context =>
+        //            {
+        //                var logger = context.HttpContext.RequestServices.GetRequiredService<ILogger<JwtBearerEvents>>();
+        //                logger.LogError($"[JWT Error] {context.Exception.Message}");
+        //                return Task.CompletedTask;
+        //            },
+        //            OnChallenge = context =>
+        //            {
+        //                var logger = context.HttpContext.RequestServices.GetRequiredService<ILogger<JwtBearerEvents>>();
+        //                logger.LogWarning($"[JWT Challenge] Error: {context.Error}, Description: {context.ErrorDescription}");
+        //                return Task.CompletedTask;
+        //            },
+        //            OnForbidden = context =>
+        //            {
+        //                var logger = context.HttpContext.RequestServices.GetRequiredService<ILogger<JwtBearerEvents>>();
+        //                logger.LogWarning("[JWT Forbidden] Yetkilendirme başarısız.");
+        //                return Task.CompletedTask;
+        //            }
+        //        };
+        //    });
+
+        //    return services;
+        //}
+
 
 
         public static IServiceCollection AddSwaggerDocumentation(this IServiceCollection services)
@@ -87,16 +120,6 @@ namespace Mediko.Extensions
             return services;
         }
 
-        public static IServiceCollection AddLdapAuthentication(this IServiceCollection services, IConfiguration configuration)
-        {
-            services.AddHttpClient<ILdapAuthService, LdapAuthService>(client =>
-            {
-                client.Timeout = TimeSpan.FromSeconds(5); 
-            });
-
-            services.AddSingleton<JwtTokenService>();
-
-            return services;
-        }
+      
     }
 }
