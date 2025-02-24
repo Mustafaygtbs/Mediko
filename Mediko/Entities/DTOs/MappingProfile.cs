@@ -4,6 +4,8 @@ using Mediko.Entities.DTOs.AppointmentDTOs;
 using Mediko.Entities.DTOs.AppointmentDTOs.Mediko.Entities.DTOs.AppointmentDTOs;
 using Mediko.Entities.DTOs.DepartmentDTOs;
 using Mediko.Entities.DTOs.PoliclinicDTOs;
+using Mediko.Entities.DTOs;
+using Mediko.Entities.DTOs.UserDTOs;
 
 namespace Mediko.API.MappingProfiles
 {
@@ -22,7 +24,7 @@ namespace Mediko.API.MappingProfiles
             CreateMap<Policlinic, PoliclinicDto>()
                 .ForMember(dest => dest.Department, opt => opt.MapFrom(src => src.Department));
 
-            // TERS EŞLEME VE CREATE/UPDATE DTO'LAR
+            // Ters eşleme ve Create/Update DTO'lar
             CreateMap<DepartmentDto, Department>();
             CreateMap<DepartmentCreateDto, Department>();
             CreateMap<DepartmentUpdateDto, Department>();
@@ -32,6 +34,10 @@ namespace Mediko.API.MappingProfiles
             CreateMap<PoliclinicUpdateDto, Policlinic>();
             CreateMap<PoliclinicCreateWithNameDto, Policlinic>();
 
+            // Kullanıcı dönüşümü için mapping
+            CreateMap<User, UserDto>();
+
+            // Randevu dönüşümü
             CreateMap<Appointment, AppointmentDto>();
 
             CreateMap<AppointmentCreateDto, Appointment>()

@@ -1,5 +1,6 @@
 ﻿using Mediko.DataAccess;
 using Mediko.Entities;
+using Mediko.Entities.DTOs.AuthDTOs;
 using Mediko.Services;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Http;
@@ -34,44 +35,7 @@ namespace Mediko.Controllers
             _context = context;
         }
 
-
-        [AllowAnonymous]
-        [HttpPost("Register")]
-        public async Task<IActionResult> Register([FromBody] RegisterDto model)
-        {
-            if (model == null)
-                return BadRequest(new { Message = "Boş model." });
-
-            var userExists = await _userManager.FindByNameAsync(model.KullaniciAdi);
-            if (userExists != null)
-                return BadRequest(new { Message = "Kullanıcı zaten var." });
-
-            var newUser = new User
-            {
-                UserName = model.KullaniciAdi,
-                Email = model.Email,
-                AdSoyad = model.AdSoyad,
-                OgrenciNo = model.OgrenciNo,
-                TcKimlikNo = model.TcKimlikNo,
-                DogumTarihi = model.DogumTarihi,
-                DogumYeri = model.DogumYeri,
-                AnneAdi = model.AnneAdi,
-                BabaAdi = model.BabaAdi,
-                TelNo = model.TelNo,
-                EmailConfirmed = true 
-            };
-
-
-            var createResult = await _userManager.CreateAsync(newUser, model.Sifre);
-            if (!createResult.Succeeded)
-                return BadRequest(createResult.Errors);
-
-            await _userManager.AddToRoleAsync(newUser, "User");
-
-            return Ok(new { Message = "Kayıt başarılı." });
-        }
-
-
+       
         [AllowAnonymous]
         [HttpPost("LdapsızLogin")]
         public async Task<IActionResult> Login([FromBody] LdapsizLoginDto model)
@@ -101,7 +65,6 @@ namespace Mediko.Controllers
             });
         }
 
-        [AllowAnonymous]
         [HttpPost("Refresh-Token")]
         public async Task<IActionResult> RefreshToken([FromBody] RefreshTokenRequestDto request)
         {
@@ -147,7 +110,7 @@ namespace Mediko.Controllers
             }
         }
 
-        [Authorize]
+        
         [HttpPost("Logout")]
         public IActionResult Logout([FromBody] RefreshTokenRequestDto request)
         {
@@ -164,203 +127,7 @@ namespace Mediko.Controllers
 
             return Ok(new { Message = "Başarıyla çıkış yapıldı. Refresh token silindi." });
         }
+     
 
-
-
-        [HttpPost("GetUserInfo")]
-        public async Task<IActionResult> GetUserInfo()
-        {
-            // "Authorization" header'ını alıyoruz.
-            var authHeader = Request.Headers["Authorization"].ToString();
-            if (string.IsNullOrEmpty(authHeader) || !authHeader.StartsWith("Bearer "))
-            {
-                return BadRequest(new { Message = "Authorization header eksik veya geçersiz." });
-            }
-
-            // "Bearer " kısmını kaldırarak token'ı elde ediyoruz.
-            var token = authHeader.Substring("Bearer ".Length).Trim();
-
-            try
-            {
-                var handler = new JwtSecurityTokenHandler();
-
-                // JWT ayarları
-                var key = Encoding.UTF8.GetBytes(_jwtSettings.Key ?? string.Empty);
-                var validations = new TokenValidationParameters
-                {
-                    ValidateIssuerSigningKey = true,
-                    IssuerSigningKey = new SymmetricSecurityKey(key),
-                    ValidateIssuer = true,
-                    ValidateAudience = true,
-                    ValidIssuer = _jwtSettings.Issuer,
-                    ValidAudience = _jwtSettings.Audience,
-                    ValidateLifetime = true,
-                    ClockSkew = TimeSpan.Zero
-                };
-
-                // Token'ı doğrula
-                var principal = handler.ValidateToken(token, validations, out _);
-
-                // Token'dan kullanıcı adı alalım
-                var userName = principal.Identity?.Name;
-                if (string.IsNullOrEmpty(userName))
-                    return Unauthorized(new { Message = "Token'dan kullanıcı bilgisi okunamadı." });
-
-                // Veritabanından kullanıcı bul
-                var user = await _userManager.FindByNameAsync(userName);
-                if (user == null)
-                    return NotFound(new { Message = "Kullanıcı veritabanında bulunamadı." });
-
-                var roles = await _userManager.GetRolesAsync(user);
-
-                // Token içindeki claim'ler
-                var adSoyad = principal.FindFirst("AdSoyad")?.Value;
-                var ogrenciNo = principal.FindFirst("OgrenciNo")?.Value;
-                var tcKimlikNo = principal.FindFirst("TcKimlikNo")?.Value;
-                var dogumTarihi = principal.FindFirst("DogumTarihi")?.Value;
-                var dogumYeri = principal.FindFirst("DogumYeri")?.Value;
-                var anneAdi = principal.FindFirst("AnneAdi")?.Value;
-                var babaAdi = principal.FindFirst("BabaAdi")?.Value;
-                var telNo = principal.FindFirst("TelNo")?.Value;
-
-                // Döneceğimiz cevap
-                return Ok(new
-                {
-                    userName = userName,
-                    email = user.Email,
-                    roles = roles,
-                    adSoyad,
-                    ogrenciNo,
-                    tcKimlikNo,
-                    dogumTarihi,
-                    dogumYeri,
-                    anneAdi,
-                    babaAdi,
-                    telNo
-                });
-            }
-            catch (SecurityTokenException)
-            {
-                return Unauthorized(new { Message = "Geçersiz veya süresi dolmuş token." });
-            }
-            catch (Exception ex)
-            {
-                return StatusCode(500, new { Message = "Beklenmeyen bir hata oluştu.", Error = ex.Message });
-            }
-        }
-
-
-        //[HttpPost("GetUserInfo")]
-        //public async Task<IActionResult> GetUserInfo([FromBody] TokenBodyDto request)
-        //{
-        //    if (string.IsNullOrEmpty(request?.Token))
-        //    {
-        //        return BadRequest(new { Message = "Token alanı boş olamaz." });
-        //    }
-
-        //    try
-        //    {
-        //        var token = request.Token;
-        //        var handler = new JwtSecurityTokenHandler();
-
-        //        // JWT ayarları
-        //        var key = Encoding.UTF8.GetBytes(_jwtSettings.Key ?? string.Empty);
-        //        var validations = new TokenValidationParameters
-        //        {
-        //            ValidateIssuerSigningKey = true,
-        //            IssuerSigningKey = new SymmetricSecurityKey(key),
-        //            ValidateIssuer = true,
-        //            ValidateAudience = true,
-        //            ValidIssuer = _jwtSettings.Issuer,
-        //            ValidAudience = _jwtSettings.Audience,
-        //            ValidateLifetime = true,
-        //            ClockSkew = TimeSpan.Zero
-        //        };
-
-        //        // Token'ı doğrula
-        //        var principal = handler.ValidateToken(token, validations, out _);
-
-        //        // Token’dan kullanıcı adı alalım
-        //        var userName = principal.Identity?.Name;
-        //        if (string.IsNullOrEmpty(userName))
-        //            return Unauthorized(new { Message = "Token'dan kullanıcı bilgisi okunamadı." });
-
-        //        // Veritabanından kullanıcı bul
-        //        var user = await _userManager.FindByNameAsync(userName);
-        //        if (user == null)
-        //            return NotFound(new { Message = "Kullanıcı veritabanında bulunamadı." });
-
-        //        var roles = await _userManager.GetRolesAsync(user);
-
-        //        // Token içindeki claim’ler
-        //        var adSoyad = principal.FindFirst("AdSoyad")?.Value;
-        //        var ogrenciNo = principal.FindFirst("OgrenciNo")?.Value;
-        //        var tcKimlikNo = principal.FindFirst("TcKimlikNo")?.Value;
-        //        var dogumTarihi = principal.FindFirst("DogumTarihi")?.Value;
-        //        var dogumYeri = principal.FindFirst("DogumYeri")?.Value;
-        //        var anneAdi = principal.FindFirst("AnneAdi")?.Value;
-        //        var babaAdi = principal.FindFirst("BabaAdi")?.Value;
-        //        var telNo = principal.FindFirst("TelNo")?.Value;
-
-        //        // Döneceğimiz cevap
-        //        return Ok(new
-        //        {
-        //            userName = userName,
-        //            email = user.Email,
-        //            roles = roles,
-        //            adSoyad,
-        //            ogrenciNo,
-        //            tcKimlikNo,
-        //            dogumTarihi,
-        //            dogumYeri,
-        //            anneAdi,
-        //            babaAdi,
-        //            telNo
-        //        });
-        //    }
-        //    catch (SecurityTokenException)
-        //    {
-        //        return Unauthorized(new { Message = "Geçersiz veya süresi dolmuş token." });
-        //    }
-        //    catch (Exception ex)
-        //    {
-        //        return StatusCode(500, new { Message = "Beklenmeyen bir hata oluştu.", Error = ex.Message });
-        //    }
-        //}
-    }
-
-    public class RegisterDto
-    {
-        public string? KullaniciAdi { get; set; }
-        public string? Sifre { get; set; }
-        public string? Email { get; set; }
-        public string? AdSoyad { get; set; }
-        public string? OgrenciNo { get; set; }
-        public string? TcKimlikNo { get; set; }
-        public DateTime DogumTarihi { get; set; }
-        public string? DogumYeri { get; set; }
-        public string? AnneAdi { get; set; }
-        public string? BabaAdi { get; set; }
-        public string? TelNo { get; set; }
-    }
-
-    public class LdapsizLoginDto
-    {
-        public string? KullaniciAdi { get; set; }
-    }
-    public class TokenBodyDto
-    {
-        public string? Token { get; set; }
-    }
-
-    public class LdapLoginDto
-    {
-        public string? KullaniciAdi { get; set; }
-        public string? Sifre { get; set; }
-    }
-
-    public class RefreshTokenRequestDto
-    {
-        public string RefreshToken { get; set; }
-    }
+    }    
 }

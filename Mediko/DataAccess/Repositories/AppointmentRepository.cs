@@ -28,6 +28,12 @@ namespace Mediko.DataAccess.Repositories
             return await _dbSet
                  .Where(a => a.Status == AppointmentStatus.Onaylandı)
                  .ToListAsync();
+        } 
+        public async Task<IEnumerable<Appointment>> GetOnayBekleyen()
+        {
+            return await _dbSet
+                 .Where(a => a.Status == AppointmentStatus.OnayBekliyor)
+                 .ToListAsync();
         }
 
     }

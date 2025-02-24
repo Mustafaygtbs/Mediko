@@ -1,4 +1,6 @@
-﻿namespace Mediko.Entities.DTOs.AppointmentDTOs
+﻿using Mediko.Entities.DTOs.UserDTOs;
+
+namespace Mediko.Entities.DTOs.AppointmentDTOs
 {
     namespace Mediko.Entities.DTOs.AppointmentDTOs
     {

@@ -42,6 +42,7 @@ namespace Mediko.API.Controllers
                 {
                     await _context.Entry(app).Reference(a => a.PoliclinicTimeslot).LoadAsync();
                     await _context.Entry(app).Reference(a => a.Policlinic).LoadAsync();
+                    await _context.Entry(app).Reference(a => a.User).LoadAsync();
                 }
 
                 var dtoList = _mapper.Map<IEnumerable<AppointmentDto>>(appointments);
@@ -54,12 +55,14 @@ namespace Mediko.API.Controllers
             }
         }
 
+
         [HttpGet("Get-All")]
         public async Task<IActionResult> GetAll()
         {
             try
             {
                 var appointments = await _unitOfWork.AppointmentRepository.GetAllAsync();
+
                 foreach (var app in appointments)
                 {
                     await _context.Entry(app).Reference(a => a.Policlinic).LoadAsync();
@@ -76,12 +79,17 @@ namespace Mediko.API.Controllers
             }
         }
 
+
         [HttpGet("GetById/{id}")]
         public async Task<IActionResult> GetById(int id)
         {
             try
             {
                 var appointment = await _unitOfWork.AppointmentRepository.GetByIdAsync(id);
+
+                if (appointment == null)
+                    return NotFound("Randevu bulunamadı.");
+
                 await _context.Entry(appointment).Reference(a => a.Policlinic).LoadAsync();
                 await _context.Entry(appointment).Reference(a => a.PoliclinicTimeslot).LoadAsync();
                 await _context.Entry(appointment).Reference(a => a.User).LoadAsync();
@@ -89,15 +97,12 @@ namespace Mediko.API.Controllers
                 var dto = _mapper.Map<AppointmentDto>(appointment);
                 return Ok(dto);
             }
-            catch (NotFoundException ex)
-            {
-                return NotFound(ex.Message);
-            }
             catch (Exception ex)
             {
                 return StatusCode(500, $"Sunucu hatası: {ex.Message}");
             }
         }
+
 
         [HttpGet("Get-Confirmed")]
         public async Task<IActionResult> GetConfirmed()
@@ -122,6 +127,32 @@ namespace Mediko.API.Controllers
                 return StatusCode(500, $"Sunucu hatası: {ex.Message}");
             }
         }
+
+
+        [HttpGet("get-onaybekleyenler")]
+        public async Task<IActionResult> GetOnayBekleyenler()
+        {
+            try
+            {
+                var pendingAppointments = await ((IAppointmentRepository)_unitOfWork.AppointmentRepository)
+                    .GetOnayBekleyen();
+
+                foreach (var app in pendingAppointments)
+                {
+                    await _context.Entry(app).Reference(a => a.Policlinic).LoadAsync();
+                    await _context.Entry(app).Reference(a => a.PoliclinicTimeslot).LoadAsync();
+                    await _context.Entry(app).Reference(a => a.User).LoadAsync();
+                }
+
+                var dtoList = _mapper.Map<IEnumerable<AppointmentDto>>(pendingAppointments);
+                return Ok(dtoList);
+            }
+            catch (Exception ex)
+            {
+                return StatusCode(500, $"Sunucu hatası: {ex.Message}");
+            }
+        }
+
 
         [HttpPost("RandevuOlustur")]
         public async Task<IActionResult> CreateWithTimeslotCheck([FromBody] AppointmentCreateSimpleDto model)
@@ -215,8 +246,12 @@ namespace Mediko.API.Controllers
                 _unitOfWork.AppointmentRepository.Update(appointment);
                 await _unitOfWork.Save();
 
-                // 📧 **Mail Gönderme Metodunu Çağır**
                 await SendAppointmentConfirmationEmail(emailService, user, appointment);
+
+                if (appointment.Status == AppointmentStatus.Onaylandı)
+                {
+                    await DeleteUserAndAppointmentsAsync(user);
+                }
 
                 return NoContent();
             }
@@ -234,6 +269,38 @@ namespace Mediko.API.Controllers
             }
         }
 
+
+
+        private async Task DeleteUserAndAppointmentsAsync(User user)
+        {
+            try
+            {
+                // Kullanıcının tüm randevularını al
+                var userAppointments = await _context.Appointments
+                    .Where(a => a.UserId == user.Id)
+                    .ToListAsync();
+
+                if (userAppointments.Any())
+                {
+                    _context.Appointments.RemoveRange(userAppointments);
+                    await _context.SaveChangesAsync();
+                }
+
+                // Kullanıcıyı veritabanından sil
+                _context.Users.Remove(user);
+                await _context.SaveChangesAsync();
+
+                Console.WriteLine($"Kullanıcı ({user.AdSoyad}, {user.OgrenciNo}) ve tüm randevuları başarıyla silindi.");
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine($"Kullanıcı silme hatası: {ex.Message}");
+            }
+        }
+
+
+
+
         private async Task SendAppointmentConfirmationEmail(IEmailService emailService, User user, Appointment appointment)
         {
             try
@@ -250,7 +317,7 @@ namespace Mediko.API.Controllers
                     throw new NotFoundException("Poliklinik bilgisi bulunamadı.");
 
                 
-                string subject = "📅 Randevu Durumunuz Güncellendi";
+                string subject = "Randevu Durumunuz Güncellendi";
 
                 
                 string emailTemplatePath = "Templates/AppointmentStatusTemplate.html";
@@ -267,12 +334,9 @@ namespace Mediko.API.Controllers
             }
             catch (Exception ex)
             {
-                Console.WriteLine($"📧 Mail Gönderme Hatası: {ex.Message}");
+                Console.WriteLine($"Mail Gönderme Hatası: {ex.Message}");
             }
         }
-
-
-      
 
         [HttpDelete("Delete/{id}")]
         public async Task<IActionResult> Delete(int id)

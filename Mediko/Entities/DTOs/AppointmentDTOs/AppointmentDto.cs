@@ -1,4 +1,6 @@
-﻿namespace Mediko.Entities.DTOs.AppointmentDTOs
+﻿using Mediko.Entities.DTOs.UserDTOs;
+
+namespace Mediko.Entities.DTOs.AppointmentDTOs
 {
     public class AppointmentDto
     {
@@ -10,5 +12,6 @@
         public TimeOnly AppointmentTime { get; set; }
         public DateTime FullAppointmentDateTime { get; set; }
         public AppointmentStatus Status { get; set; }
+        public UserDto User { get; set; }
     }
 }
