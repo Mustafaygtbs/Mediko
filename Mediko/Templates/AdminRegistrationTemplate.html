@@ -1,8 +1,9 @@
 <!DOCTYPE html>
 <html>
 <head>
+
     <meta charset="UTF-8">
-    <title>Randevu Güncellemesi</title>
+    <title>Admin Kaydınız Tamamlandı</title>
     <style>
         body {
             font-family: Arial, sans-serif;
@@ -47,7 +48,7 @@
 
         .button {
             display: inline-block;
-            background: #28a745;
+            background: #007bff;
             color: white;
             padding: 10px 15px;
             text-decoration: none;
@@ -58,14 +59,14 @@
 </head>
 <body>
     <div class="container">
-        <div class="header">Randevu Durum Güncellemesi</div>
+        <div class="header">🎉 Admin Olarak Kaydınız Tamamlandı</div>
         <div class="content">
             <p>Merhaba, <b>{USERNAME}</b></p>
-            <p><b>{POLICLINIC_NAME}</b> polikliniği için randevunuzun durumu değişti.</p>
-            <p><b>Yeni Durum:</b> <span class="status">{STATUS}</span></p>
-            <p><b>Tarih:</b> {DATE}</p>
-            <p><b>Saat:</b> {TIME}</p>
-            <p>Sağlıklı günler dileriz!</p>
+            <p>Mediko Sağlık Merkezi randevu sistemine <b>Admin</b> olarak eklendiniz.</p>
+            <p><b>E-Posta:</b> {EMAIL}</p>
+            <p><b>Kayıt Tarihi:</b> {DATE}</p>
+            <p>Sisteme giriş yaparak yetkilerinizi kullanabilirsiniz.</p>
+            <a href="https://mediko.example.com/login" class="button">Giriş Yap</a>
         </div>
         <div class="footer">Mediko Sağlık Merkezi © 2025</div>
     </div>

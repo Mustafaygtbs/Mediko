@@ -2,7 +2,7 @@
 <html>
 <head>
     <meta charset="UTF-8">
-    <title>Randevu Güncellemesi</title>
+    <title>Randevu Oluşturuldu</title>
     <style>
         body {
             font-family: Arial, sans-serif;
@@ -42,30 +42,21 @@
 
         .status {
             font-weight: bold;
-            color: #28a745;
-        }
-
-        .button {
-            display: inline-block;
-            background: #28a745;
-            color: white;
-            padding: 10px 15px;
-            text-decoration: none;
-            border-radius: 5px;
-            margin-top: 20px;
+            color: #ffc107;
         }
     </style>
 </head>
 <body>
     <div class="container">
-        <div class="header">Randevu Durum Güncellemesi</div>
+        <div class="header">Randevunuz Oluşturuldu</div>
         <div class="content">
-            <p>Merhaba, <b>{USERNAME}</b></p>
-            <p><b>{POLICLINIC_NAME}</b> polikliniği için randevunuzun durumu değişti.</p>
-            <p><b>Yeni Durum:</b> <span class="status">{STATUS}</span></p>
+            <p>Merhaba <b>{USERNAME}</b>,</p>
+            <p><b>{POLICLINIC_NAME}</b> polikliniği için randevunuz oluşturulmuştur.</p>
+            <p><b>Durum:</b> <span class="status">{STATUS}</span></p>
             <p><b>Tarih:</b> {DATE}</p>
             <p><b>Saat:</b> {TIME}</p>
-            <p>Sağlıklı günler dileriz!</p>
+            <p>Randevunuz onaylandığında veya reddedildiğinde e-posta ile bilgilendirileceksiniz.</p>
+            <p>Sağlıklı günler dileriz! 🌿</p>
         </div>
         <div class="footer">Mediko Sağlık Merkezi © 2025</div>
     </div>

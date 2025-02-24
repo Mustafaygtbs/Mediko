@@ -8,6 +8,7 @@ using AutoMapper;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.EntityFrameworkCore;
 using Mediko.Entities.DTOs.AppointmentDTOs.Mediko.Entities.DTOs.AppointmentDTOs;
+using Mediko.Services;
 
 namespace Mediko.API.Controllers
 {
@@ -19,13 +20,17 @@ namespace Mediko.API.Controllers
         private readonly IUnitOfWork _unitOfWork;
         private readonly MedikoDbContext _context;
         private readonly IMapper _mapper;
+        private readonly MailIslemleri _mailIslemleri;
+       
 
-        public AppointmentController(IUnitOfWork unitOfWork, MedikoDbContext context, IMapper mapper)
+        public AppointmentController(IUnitOfWork unitOfWork, MedikoDbContext context, IMapper mapper, MailIslemleri mailIslemleri)
         {
             _unitOfWork = unitOfWork;
             _context = context;
             _mapper = mapper;
+            _mailIslemleri = mailIslemleri;
         }
+
         [HttpGet("GetByOgrenciNo/{ogrenciNo}")]
         public async Task<IActionResult> GetByOgrenciNo(string ogrenciNo)
         {
@@ -155,27 +160,24 @@ namespace Mediko.API.Controllers
 
 
         [HttpPost("RandevuOlustur")]
-        public async Task<IActionResult> CreateWithTimeslotCheck([FromBody] AppointmentCreateSimpleDto model)
+        public async Task<IActionResult> CreateWithTimeslotCheck([FromBody] AppointmentCreateSimpleDto model, [FromServices] IEmailService emailService)
         {
             try
             {
                 if (model == null)
                     throw new BadRequestException("Appointment verisi eksik veya hatalı.");
 
-                var user = await _context.Users
-                    .FirstOrDefaultAsync(u => u.OgrenciNo == model.OgrenciNo);
-
+                var user = await _context.Users.FirstOrDefaultAsync(u => u.OgrenciNo == model.OgrenciNo);
                 if (user == null)
                     throw new NotFoundException($"'{model.OgrenciNo}' numarasına sahip kullanıcı bulunamadı.");
 
-                var timeslot = await _context.PoliclinicTimeslots
-                    .FirstOrDefaultAsync(ts =>
-                        ts.PoliclinicId == model.PoliclinicId &&
-                        ts.Date == model.AppointmentDate &&
-                        ts.StartTime == model.AppointmentTime &&
-                        ts.IsOpen == true &&
-                        ts.IsBooked == false
-                    );
+                var timeslot = await _context.PoliclinicTimeslots.FirstOrDefaultAsync(ts =>
+                    ts.PoliclinicId == model.PoliclinicId &&
+                    ts.Date == model.AppointmentDate &&
+                    ts.StartTime == model.AppointmentTime &&
+                    ts.IsOpen == true &&
+                    ts.IsBooked == false
+                );
 
                 if (timeslot == null)
                     throw new BadRequestException("Seçilen tarih/saat için müsait bir slot bulunamadı veya çoktan rezerve edilmiş.");
@@ -201,7 +203,11 @@ namespace Mediko.API.Controllers
                 _context.PoliclinicTimeslots.Update(timeslot);
                 await _context.SaveChangesAsync();
 
-                return CreatedAtAction(nameof(GetById), new { id = appointment.Id }, appointment);
+                await _mailIslemleri.SendAppointmentCreationEmail(user, appointment);
+
+
+
+                return Ok();
             }
             catch (BadRequestException badEx)
             {
@@ -216,6 +222,7 @@ namespace Mediko.API.Controllers
                 return StatusCode(500, new { Message = ex.Message });
             }
         }
+
 
         [HttpPut("UpdateConfirmation")]
         public async Task<IActionResult> UpdateConfirmation([FromBody] AppointmentConfirmUpdateDto model, [FromServices] IEmailService emailService)
@@ -246,11 +253,11 @@ namespace Mediko.API.Controllers
                 _unitOfWork.AppointmentRepository.Update(appointment);
                 await _unitOfWork.Save();
 
-                await SendAppointmentConfirmationEmail(emailService, user, appointment);
+                await _mailIslemleri.SendAppointmentConfirmationEmail(user, appointment);
 
-                if (appointment.Status == AppointmentStatus.Onaylandı)
+                if (appointment.Status == AppointmentStatus.Onaylandı|| appointment.Status==AppointmentStatus.Reddedildi)
                 {
-                    await DeleteUserAndAppointmentsAsync(user);
+                    await _mailIslemleri.DeleteUserAndAppointmentsAsync(user);
                 }
 
                 return NoContent();
@@ -269,74 +276,7 @@ namespace Mediko.API.Controllers
             }
         }
 
-
-
-        private async Task DeleteUserAndAppointmentsAsync(User user)
-        {
-            try
-            {
-                // Kullanıcının tüm randevularını al
-                var userAppointments = await _context.Appointments
-                    .Where(a => a.UserId == user.Id)
-                    .ToListAsync();
-
-                if (userAppointments.Any())
-                {
-                    _context.Appointments.RemoveRange(userAppointments);
-                    await _context.SaveChangesAsync();
-                }
-
-                // Kullanıcıyı veritabanından sil
-                _context.Users.Remove(user);
-                await _context.SaveChangesAsync();
-
-                Console.WriteLine($"Kullanıcı ({user.AdSoyad}, {user.OgrenciNo}) ve tüm randevuları başarıyla silindi.");
-            }
-            catch (Exception ex)
-            {
-                Console.WriteLine($"Kullanıcı silme hatası: {ex.Message}");
-            }
-        }
-
-
-
-
-        private async Task SendAppointmentConfirmationEmail(IEmailService emailService, User user, Appointment appointment)
-        {
-            try
-            {
-                
-                appointment = await _context.Appointments
-                    .Include(a => a.Policlinic)  
-                    .FirstOrDefaultAsync(a => a.Id == appointment.Id);
-
-                if (appointment == null)
-                    throw new NotFoundException("Randevu bulunamadı.");
-
-                if (appointment.Policlinic == null)
-                    throw new NotFoundException("Poliklinik bilgisi bulunamadı.");
-
-                
-                string subject = "Randevu Durumunuz Güncellendi";
-
-                
-                string emailTemplatePath = "Templates/AppointmentStatusTemplate.html";
-                string emailTemplate = await System.IO.File.ReadAllTextAsync(emailTemplatePath);
-
-                
-                emailTemplate = emailTemplate.Replace("{USERNAME}", user.AdSoyad)
-                                             .Replace("{STATUS}", appointment.Status.ToString())
-                                             .Replace("{DATE}", appointment.AppointmentDate.ToString("yyyy-MM-dd"))
-                                             .Replace("{TIME}", appointment.AppointmentTime.ToString("HH:mm"))
-                                             .Replace("{POLICLINIC_NAME}", appointment.Policlinic.Name);
-
-                await emailService.SendEmailAsync(user.Email, subject, emailTemplate);
-            }
-            catch (Exception ex)
-            {
-                Console.WriteLine($"Mail Gönderme Hatası: {ex.Message}");
-            }
-        }
+       
 
         [HttpDelete("Delete/{id}")]
         public async Task<IActionResult> Delete(int id)

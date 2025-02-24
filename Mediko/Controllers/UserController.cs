@@ -1,6 +1,7 @@
 ﻿using Mediko.DataAccess;
 using Mediko.Entities;
 using Mediko.Entities.DTOs.AuthDTOs;
+using Mediko.Entities.DTOs.UserDTOs;
 using Mediko.Services;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Http;
@@ -73,9 +74,72 @@ namespace Mediko.Controllers
 
                 return Ok(new { Message = "Kayıt başarılı." });
             }
-               
-          
-            [HttpPost("GetUserInfo")]
+
+
+        //[HttpPost("RegisterAdmin")]
+        //public async Task<IActionResult> RegisterAdmin([FromBody] AdminRegisterDto model, [FromServices] MailIslemleri mailIslemleri)
+        //{
+        //    try
+        //    {
+        //        if (model == null)
+        //            return BadRequest(new { Message = "Boş model." });
+
+        //        // TC Kimlik No ile Kullanıcı Var mı Kontrol Et
+        //        var existingUser = await _userManager.FindByNameAsync(model.Tc);
+        //        if (existingUser != null)
+        //            return Conflict(new { Message = "Bu TC numarası zaten kayıtlı." });
+
+        //        var newAdmin = new User
+        //        {
+        //            UserName = model.UserName,
+        //            Email = model.Email,
+        //            AdSoyad = model.AdSoyad,
+        //            TcKimlikNo = model.Tc,
+        //            TelNo = model.TelNo,
+        //            EmailConfirmed = true,
+        //            PasswordHash = null 
+        //        };
+
+        //        var createResult = await _userManager.CreateAsync(newAdmin);
+
+
+        //        // **Oluşturma Başarısızsa Hata Dön**
+        //        if (!createResult.Succeeded)
+        //        {
+        //            var errors = createResult.Errors.Select(e => e.Description).ToList();
+        //            Console.WriteLine($"🛑 Kullanıcı oluşturma başarısız. Hatalar: {string.Join(", ", errors)}");
+        //            return BadRequest(new
+        //            {
+        //                Message = "Admin oluşturulamadı.",
+        //                Errors = errors
+        //            });
+        //        }
+
+
+        //        // **Admin Rolü Ata**
+        //        await _userManager.AddToRoleAsync(newAdmin, "Admin");
+
+        //        // 📧 **E-Posta Gönder**
+        //        try
+        //        {
+        //            await mailIslemleri.SendAdminRegistrationEmail(newAdmin);
+        //        }
+        //        catch (Exception emailEx)
+        //        {
+        //            Console.WriteLine($"📧 Mail Gönderme Hatası: {emailEx.Message}");
+        //        }
+
+        //        return Ok(new { Message = "Admin kayıt başarılı. Bilgilendirme e-postası gönderildi." });
+        //    }
+        //    catch (Exception ex)
+        //    {
+        //        Console.WriteLine($"🛑 Hata Oluştu: {ex.Message}");
+        //        return StatusCode(500, new { Message = "Sunucu hatası: " + ex.Message });
+        //    }
+        //}
+
+
+        [HttpPost("GetUserInfo")]
             public async Task<IActionResult> GetUserInfo()
             {
                 var authHeader = Request.Headers["Authorization"].ToString();
@@ -150,6 +214,9 @@ namespace Mediko.Controllers
                     return StatusCode(500, new { Message = "Beklenmeyen bir hata oluştu.", Error = ex.Message });
                 }
             }
+
+
+
         }
     }
     

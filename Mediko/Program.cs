@@ -86,6 +86,9 @@ builder.Services.AddScoped<EmailService>();
 builder.Services.AddScoped<IEmailService, EmailService>(provider =>
     provider.GetRequiredService<EmailService>());
 
+builder.Services.AddScoped<MailIslemleri>();
+
+
 // EmailSettings sınıfını DI konteynerine doğru şekilde ekleyelim:
 builder.Services.Configure<EmailSettings>(builder.Configuration.GetSection("EmailSettings"));
 builder.Services.AddSingleton(resolver =>

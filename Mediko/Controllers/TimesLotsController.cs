@@ -21,6 +21,7 @@ namespace Mediko.API.Controllers
             _context = context;
         }
 
+
         [HttpPut("UpdateIsOpen")]
         public async Task<IActionResult> UpdateIsOpen([FromBody] TimeslotOpenUpdateDto model)
         {
@@ -102,5 +103,55 @@ namespace Mediko.API.Controllers
                 return StatusCode(500, new { Message = ex.Message });
             }
         }
+
+
+        [HttpGet("CheckAvailability")]
+        public async Task<IActionResult> CheckAvailability(
+    [FromQuery] int policlinicId,
+    [FromQuery] DateOnly date,
+    [FromQuery] TimeOnly startTime)
+        {
+            try
+            {
+                var timeslot = await _context.PoliclinicTimeslots
+                    .FirstOrDefaultAsync(ts =>
+                        ts.PoliclinicId == policlinicId &&
+                        ts.Date == date &&               
+                        ts.StartTime == startTime        
+                    );
+
+                if (timeslot == null)
+                {
+                    return Ok(new
+                    {
+                        Available = false,
+                        Message = "Belirtilen kriterlere uyan timeslot bulunamadı. Randevuya müsait değil."
+                    });
+                }
+
+                if (timeslot.IsOpen && !timeslot.IsBooked)
+                {
+                    return Ok(new
+                    {
+                        Available = true,
+                        Message = "Randevu almaya müsait."
+                    });
+                }
+                else
+                {
+                    return Ok(new
+                    {
+                        Available = false,
+                        Message = "Randevuya müsait değil."
+                    });
+                }
+            }
+            catch (Exception ex)
+            {
+                return StatusCode(500, new { Message = ex.Message });
+            }
+        }
+
     }
 }
+
