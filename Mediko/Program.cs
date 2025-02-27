@@ -26,6 +26,10 @@ builder.Services.AddControllers().AddJsonOptions(options =>
     options.JsonSerializerOptions.Converters.Add(new System.Text.Json.Serialization.JsonStringEnumConverter());
 });
 
+builder.Services.AddHttpClient<LdapApiService>(client =>
+{
+    client.BaseAddress = new Uri("http://192.168.2.16:8181/");
+});
 
 
 // JWT ayarlarını yapılandırma
