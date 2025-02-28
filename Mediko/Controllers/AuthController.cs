@@ -11,6 +11,7 @@ using Microsoft.IdentityModel.Tokens;
 using System.IdentityModel.Tokens.Jwt;
 using System.Text;
 
+
 namespace Mediko.Controllers
 {
     [ApiController]
@@ -22,20 +23,95 @@ namespace Mediko.Controllers
         private readonly SignInManager<User> _signInManager;
         private readonly JwtSettings _jwtSettings;
         private readonly MedikoDbContext _context;
+        private readonly LdapApiService _ldapApiService;
 
-        public AuthController(
-            UserManager<User> userManager,
-            SignInManager<User> signInManager,
-            IOptions<JwtSettings> jwtSettings,
-            MedikoDbContext context)
+       
+
+        public AuthController(UserManager<User> userManager, SignInManager<User> signInManager, JwtSettings jwtSettings, MedikoDbContext context, LdapApiService ldapApiService)
         {
             _userManager = userManager;
             _signInManager = signInManager;
-            _jwtSettings = jwtSettings.Value;
+            _jwtSettings = jwtSettings;
             _context = context;
+            _ldapApiService = ldapApiService;
         }
 
-       
+
+
+
+        [AllowAnonymous]
+        [HttpPost("LoginWithLdap")]
+        public async Task<IActionResult> LoginWithLdap([FromBody] LdapLoginModel model)
+        {
+            if (model == null
+                || string.IsNullOrWhiteSpace(model.Username)
+                || string.IsNullOrWhiteSpace(model.Password))
+            {
+                return BadRequest("Kullanıcı adı ve şifre gereklidir.");
+            }
+
+            bool isAuthenticated = await _ldapApiService.AuthenticateAsync(model.Username, model.Password);
+            if (!isAuthenticated)
+            {
+                return Unauthorized("LDAP kimlik doğrulaması başarısız.");
+            }
+
+            var existingUser = await _userManager.FindByNameAsync(model.Username);
+            if (existingUser != null)
+            {
+                return Conflict("Bu kullanıcı adına sahip bir kullanıcı zaten mevcut.");
+            }
+
+            var user = await _userManager.FindByNameAsync(model.Username);
+            if (user == null)
+            {
+                user = new User
+                {
+                    UserName = model.Username
+                };
+
+
+                var createResult = await _userManager.CreateAsync(user);
+                if (!createResult.Succeeded)
+                {
+                    return BadRequest(new
+                    {
+                        Message = "Kullanıcı oluşturulurken hata oluştu.",
+                        Errors = createResult.Errors
+                    });
+                }
+
+
+                var roleResult = await _userManager.AddToRoleAsync(user, "User");
+                if (!roleResult.Succeeded)
+                {
+                    return BadRequest(new
+                    {
+                        Message = "Kullanıcıya varsayılan rol atanamadı.",
+                        Errors = roleResult.Errors
+                    });
+                }
+            }
+
+            var (accessToken, accessExp, refreshToken, refreshExp) =
+                CustomTokenHandler.CreateToken(user, _jwtSettings, _context);
+
+            return Ok(new
+            {
+                accessToken = new
+                {
+                    token = accessToken,
+                    expiration = accessExp
+                },
+                refreshToken = new
+                {
+                    token = refreshToken,
+                    expiration = refreshExp
+                }
+            });
+        }
+
+
         [AllowAnonymous]
         [HttpPost("LdapsızLogin")]
         public async Task<IActionResult> Login([FromBody] LdapsizLoginDto model)
@@ -44,6 +120,7 @@ namespace Mediko.Controllers
                 return BadRequest(new { Message = "Kullanıcı adı veya şifre boş olamaz." });
 
             var user = await _userManager.FindByNameAsync(model.KullaniciAdi);
+
             if (user == null)
                 return Unauthorized(new { Message = "Kullanıcı bulunamadı." });
 
@@ -129,5 +206,10 @@ namespace Mediko.Controllers
         }
      
 
-    }    
+    }
+    public class LdapLoginModel
+    {
+        public string Username { get; set; }
+        public string Password { get; set; }
+    }
 }

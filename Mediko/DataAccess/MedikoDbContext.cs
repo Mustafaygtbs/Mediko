@@ -59,13 +59,6 @@ namespace Mediko.DataAccess
                 .HasForeignKey(a => a.UserId)
                 .OnDelete(DeleteBehavior.Cascade);
 
-            builder.Entity<User>()
-           .HasIndex(u => u.TcKimlikNo)
-           .IsUnique();
-
-            builder.Entity<User>()
-           .HasIndex(u => u.OgrenciNo)
-           .IsUnique();
 
             builder.Entity<PoliclinicTimeslot>()
               .HasIndex(ts => new { ts.PoliclinicId, ts.Date, ts.StartTime })

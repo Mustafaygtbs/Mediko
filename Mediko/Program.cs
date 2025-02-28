@@ -35,6 +35,11 @@ builder.Services.AddHttpClient<LdapApiService>(client =>
 // JWT ayarlarını yapılandırma
 builder.Services.ConfigureJWT(builder.Configuration);
 builder.Services.Configure<JwtSettings>(builder.Configuration.GetSection("Jwt"));
+builder.Services.AddSingleton(resolver =>
+{
+    var opt = resolver.GetRequiredService<IOptions<JwtSettings>>();
+    return opt.Value; // <-- Doğrudan JwtSettings nesnesi
+});
 
 // DbContext kurulumu 
 builder.Services.AddDbContext<MedikoDbContext>(options =>
